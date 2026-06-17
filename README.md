@@ -77,7 +77,7 @@ tubes-instrumentasi/
 │   ├── 02_servo_sorter/            ← kontrol servo + logika sorting
 │   ├── 03_conveyor_motor/          ← motor DC + PWM speed control
 │   ├── 04_emergency_stop/          ← MQ-2 + relay + tombol NC
-│   ├── 05_lcd_display/             ← LCD I2C + layout per state
+│   ├── 05_ui_display/             ← LCD I2C + layout per state
 │   ├── 06_iot_mqtt/                ← WiFi + MQTT + Node-RED
 │   └── 07_integration_test/        ← end-to-end test semua modul
 │
