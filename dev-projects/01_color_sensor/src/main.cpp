@@ -1,18 +1,36 @@
 #include <Arduino.h>
+#include "ColorSensor.h"
 
-// put function declarations here:
-int myFunction(int, int);
+ColorSensor::Config colorConfig =
+{
+    .pinLedR = 25,
+    .pinLedG = 26,
+    .pinLedB = 27,
 
-void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+    .pinPhotodiode = 34,
+
+    .sampleDelayMs = 50
+};
+
+ColorSensor colorSensor(colorConfig);
+
+void setup()
+{
+    Serial.begin(115200);
+
+    colorSensor.begin();
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-}
+void loop()
+{
+    colorSensor.update();
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+    if (colorSensor.readColor())
+    {
+        Serial.print("Detected : ");
+
+        Serial.println(
+            colorSensor.colorToString(
+                colorSensor.getColor()));
+    }
 }
