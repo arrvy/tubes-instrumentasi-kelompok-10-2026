@@ -267,8 +267,8 @@ Detail lengkap: [`docs/state_machine.md`](docs/state_machine.md)
 
 ```bash
 # 1. Clone repo
-git clone https://github.com/[username]/tubes-instrumentasi.git
-cd tubes-instrumentasi
+git clone https://github.com/arrvy/tubes-instrumentasi-kelompok-10-2026.git
+cd tubes-instrumentasi-kelompok-10-2026
 
 # 2. Buka dev project di PlatformIO (contoh: color sensor)
 cd dev-projects/01_color_sensor
