@@ -34,6 +34,7 @@
 
     void ServoSorter::update()
     {
+        
         processStateMachine();
     }
 
@@ -203,6 +204,10 @@
                 break;
             }
 
+            /*
+            * Wait for object travel time from
+            * color sensing zone to sorting zone.
+            */
             case State::WAIT_DELAY:
             {
                 if ((now - _stateTimestamp) >= _config.sortDelayMs)
@@ -213,6 +218,10 @@
                 break;
             }
 
+            /*
+            * Move servo to target angle
+            * corresponding to detected color.
+            */
             case State::MOVE_TO_TARGET:
             {
                 _servo.write(_targetAngle);
@@ -224,6 +233,10 @@
                 break;
             }
 
+            /*
+            * Hold sorting gate for a short duration
+            * to ensure object leaves conveyor.
+            */
             case State::HOLD_POSITION:
             {
                 if ((now - _stateTimestamp) >= _config.holdTimeMs)
@@ -234,6 +247,10 @@
                 break;
             }
 
+            /*
+            * Return servo to neutral position
+            * and prepare next sorting job.
+            */
             case State::RETURN_HOME:
             {
                 _servo.write(_config.homeAngle);
