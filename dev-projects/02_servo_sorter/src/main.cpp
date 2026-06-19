@@ -1,18 +1,68 @@
 #include <Arduino.h>
 
-// put function declarations here:
-int myFunction(int, int);
+#include "ServoSorter.h"
+#include "ServoSorterConfig.h"
 
-void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+ServoSorter::Config servoCfg
+{
+    .servoPin = 18,
+
+    .homeAngle = 90,
+
+    .redAngle = 30,
+    .greenAngle = 60,
+    .blueAngle = 120,
+    .whiteAngle = 150,
+    .blackAngle = 180,
+
+    .sortDelayMs = 1500,
+
+    .holdTimeMs = 500
+};
+
+ServoSorter servo(servoCfg);
+
+void setup()
+{
+    Serial.begin(115200);
+
+    servo.begin();
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-}
+void loop()
+{
+    servo.update();
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+    if(Serial.available())
+    {
+        String cmd = Serial.readStringUntil('\n');
+
+        cmd.trim();
+
+        if(cmd == "red")
+        {
+            servo.triggerSort(
+                ServoSorter::ColorClass::RED
+            );
+        }
+
+        else if(cmd == "green")
+        {
+            servo.triggerSort(
+                ServoSorter::ColorClass::GREEN
+            );
+        }
+
+        else if(cmd == "blue")
+        {
+            servo.triggerSort(
+                ServoSorter::ColorClass::BLUE
+            );
+        }
+
+        else if(cmd == "debug")
+        {
+            servo.printDebug(Serial);
+        }
+    }
 }
