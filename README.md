@@ -362,3 +362,6 @@ refactor     : refactor kode tanpa ubah fungsi
 | Gambaran kasar ke asisten | 18 Jun 2026 | 🔄 In Progress |
 | Laporan perancangan (dastek + langkah) | 23 Jun 2026 | ⏳ Todo |
 | Responsi + laporan tugas besar | 29 Jun 2026 | ⏳ Todo |
+
+## Contributors
+[![GitHub contributors](https://img.shields.io/github/contributors/arrvy/tubes-instrumentasi-kelompok-10-2026)](https://github.com/arrvy/tubes-instrumentasi-kelompok-10-2026/graphs/contributors)
