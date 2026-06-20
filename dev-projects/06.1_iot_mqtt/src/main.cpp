@@ -1,18 +1,46 @@
 #include <Arduino.h>
 
-// put function declarations here:
-int myFunction(int, int);
+#include "IoTBlynk.h"
 
-void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+IoTBlynk::Config iotConfig
+{
+    .authToken = "TOKEN",
+
+    .ssid = "WIFI_NAME",
+
+    .password = "WIFI_PASS",
+
+    .uploadIntervalMs = 1000
+};
+
+IoTBlynk iot(
+    iotConfig
+);
+
+void setup()
+{
+    Serial.begin(115200);
+
+    iot.begin();
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-}
+void loop()
+{
+    iot.update();
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+    iot.setSystemState(
+        "RUNNING"
+    );
+
+    iot.setLastColor(
+        "RED"
+    );
+
+    iot.setObjectCount(
+        123
+    );
+
+    iot.setEmergency(
+        false
+    );
 }
