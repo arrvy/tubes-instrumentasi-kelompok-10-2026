@@ -71,5 +71,11 @@ void loop()
             Serial.print(F("Speed set to: "));
             Serial.println(speed);
         }
+
+        else if(cmd == "speed")
+        {
+            Serial.print(F("Current speed: "));
+            Serial.println(conveyor.getSpeed());
+        }
     }
 }

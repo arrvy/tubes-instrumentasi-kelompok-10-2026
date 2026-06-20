@@ -26,7 +26,6 @@ bool ConveyorMotor::begin()
 
     // Configure PWM channel 0 with the specified frequency and resolution
     ledcSetup(0, _config.pwmFrequency, _config.pwmResolution);
-    
     // Attach the enable pin to channel 0
     ledcAttachPin(_config.enPin, 0);
 
@@ -133,7 +132,7 @@ void ConveyorMotor::applyOutput()
             );
 
             ledcWrite(
-                _config.enPin,
+                0,
                 _speed
             );
 
@@ -143,7 +142,7 @@ void ConveyorMotor::applyOutput()
         case ConveyorState::STOPPED:
         {
             ledcWrite(
-                _config.enPin,
+                0,
                 0
             );
 
@@ -163,7 +162,7 @@ void ConveyorMotor::applyOutput()
             );
 
             ledcWrite(
-                _config.enPin,
+                0,
                 0
             );
 
