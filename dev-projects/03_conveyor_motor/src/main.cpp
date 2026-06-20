@@ -62,5 +62,14 @@ void loop()
         {
             conveyor.emergencyStop();
         }
+
+        else if(cmd.startsWith("speed "))
+        {
+            String speedStr = cmd.substring(6);
+            uint8_t speed = speedStr.toInt();
+            conveyor.setSpeed(speed);
+            Serial.print(F("Speed set to: "));
+            Serial.println(speed);
+        }
     }
 }
