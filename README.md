@@ -364,4 +364,6 @@ refactor     : refactor kode tanpa ubah fungsi
 | Responsi + laporan tugas besar | 29 Jun 2026 | ⏳ Todo |
 
 ## Contributors
-[![GitHub contributors](https://img.shields.io/github/contributors/arrvy/tubes-instrumentasi-kelompok-10-2026)](https://github.com/arrvy/tubes-instrumentasi-kelompok-10-2026/graphs/contributors)
+<a href="https://github.com/arrvy/tubes-instrumentasi-kelompok-10-2026/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=arrvy/tubes-instrumentasi-kelompok-10-2026" />
+</a>
