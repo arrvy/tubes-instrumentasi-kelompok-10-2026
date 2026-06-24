@@ -1,25 +1,7 @@
 #include <Arduino.h>
 #include "ConveyorMotor.h"
 
-ConveyorMotor::Config conveyorConfig
-{
-    .enPin = 25,
-    .in1Pin = 26,
-    .in2Pin = 27,
-
-    .pwmFrequency =
-    ConveyorMotorConfig::DEFAULT_PWM_FREQUENCY,
-
-    .pwmResolution =
-    ConveyorMotorConfig::DEFAULT_PWM_RESOLUTION,
-
-    .defaultSpeed =
-    ConveyorMotorConfig::DEFAULT_SPEED
-};
-
-ConveyorMotor conveyor(
-    conveyorConfig
-);
+ConveyorMotor conveyor(ConveyorMotor::defaultConfig());
 
 void setup()
 {

@@ -19,6 +19,20 @@ _speed(config.defaultSpeed)
 {
 }
 
+ConveyorMotor::Config ConveyorMotor::defaultConfig()
+{
+    Config config;
+
+    config.enPin = 25;
+    config.in1Pin = 26;
+    config.in2Pin = 27;
+    config.pwmFrequency = ConveyorMotorConfig::DEFAULT_PWM_FREQUENCY;
+    config.pwmResolution = ConveyorMotorConfig::DEFAULT_PWM_RESOLUTION;
+    config.defaultSpeed = ConveyorMotorConfig::DEFAULT_SPEED;
+
+    return config;
+}
+
 bool ConveyorMotor::begin()
 {
     pinMode(_config.in1Pin, OUTPUT);

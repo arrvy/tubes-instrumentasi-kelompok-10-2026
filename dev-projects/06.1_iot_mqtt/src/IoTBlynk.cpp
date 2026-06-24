@@ -24,6 +24,18 @@ _emergency(false)
 {
 }
 
+IoTBlynk::Config IoTBlynk::defaultConfig()
+{
+    Config config;
+
+    config.authToken = "TOKEN";
+    config.ssid = "WIFI_NAME";
+    config.password = "WIFI_PASS";
+    config.uploadIntervalMs = IoTBlynkConfig::DEFAULT_UPLOAD_INTERVAL_MS;
+
+    return config;
+}
+
 bool IoTBlynk::begin()
 {
     WiFi.begin(

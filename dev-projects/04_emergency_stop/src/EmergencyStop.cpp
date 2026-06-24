@@ -15,15 +15,34 @@ EmergencyStop::EmergencyStop(
 :
 _config(config),
 _state(EmergencyState::SAFE),
-_mq2Value(0),
+_temperatureC(NAN),
+_temperatureValid(false),
 _estopPressed(false),
 _feedbackLost(false),
-_lastDebounceTime(0)
+_lastTemperatureReadTime(0),
+_dht(config.dhtPin, DHT11)
 {
+}
+
+EmergencyStop::Config EmergencyStop::defaultConfig()
+{
+    Config config;
+
+    config.dhtPin = 35;
+    config.estopPin = 25;
+    config.feedbackPin = 26;
+    config.temperatureThresholdC = EmergencyStopConfig::DEFAULT_TEMPERATURE_THRESHOLD_C;
+    config.readIntervalMs = EmergencyStopConfig::DEFAULT_READ_INTERVAL_MS;
+    config.estopActiveLow = true;
+    config.feedbackActiveLow = true;
+
+    return config;
 }
 
 bool EmergencyStop::begin()
 {
+    _dht.begin();
+
     pinMode(
         _config.estopPin,
         INPUT_PULLUP
@@ -44,8 +63,19 @@ void EmergencyStop::update()
 
 void EmergencyStop::processSafety()
 {
-    _mq2Value =
-        analogRead(_config.mq2Pin);
+    uint32_t now = millis();
+
+    if(now - _lastTemperatureReadTime >=
+       _config.readIntervalMs)
+    {
+        _lastTemperatureReadTime = now;
+
+        _temperatureC =
+            _dht.readTemperature();
+
+        _temperatureValid =
+            !isnan(_temperatureC);
+    }
 
     bool estopRaw =
         digitalRead(
@@ -67,11 +97,19 @@ void EmergencyStop::processSafety()
         !feedbackRaw :
         feedbackRaw;
 
-    if(_mq2Value >=
-       _config.mq2Threshold)
+    if(!_temperatureValid)
     {
         _state =
-        EmergencyState::EMERGENCY_MQ2;
+        EmergencyState::EMERGENCY_SENSOR;
+
+        return;
+    }
+
+    if(_temperatureC >=
+       _config.temperatureThresholdC)
+    {
+        _state =
+        EmergencyState::EMERGENCY_TEMP;
 
         return;
     }
@@ -100,8 +138,13 @@ void EmergencyStop::processSafety()
 
 void EmergencyStop::resetEmergency()
 {
-    if(_mq2Value >=
-       _config.mq2Threshold)
+    if(!_temperatureValid)
+    {
+        return;
+    }
+
+    if(_temperatureC >=
+       _config.temperatureThresholdC)
     {
         return;
     }
@@ -132,10 +175,10 @@ EmergencyStop::getState() const
     return _state;
 }
 
-uint16_t
-EmergencyStop::getMQ2Value() const
+float
+EmergencyStop::getTemperatureC() const
 {
-    return _mq2Value;
+    return _temperatureC;
 }
 
 EmergencyStop::DebugData
@@ -145,13 +188,16 @@ EmergencyStop::getDebugData() const
 
     data.state = _state;
 
-    data.mq2Value = _mq2Value;
+    data.temperatureC = _temperatureC;
 
     data.estopPressed =
         _estopPressed;
 
     data.feedbackLost =
         _feedbackLost;
+
+    data.temperatureValid =
+        _temperatureValid;
 
     return data;
 }
@@ -169,8 +215,11 @@ void EmergencyStop::printDebug(
         stateToString(_state)
     );
 
-    stream.print(F("MQ2 : "));
-    stream.println(_mq2Value);
+    stream.print(F("Temp C : "));
+    stream.println(_temperatureC);
+
+    stream.print(F("Temp Valid : "));
+    stream.println(_temperatureValid);
 
     stream.print(F("EStop : "));
     stream.println(_estopPressed);
@@ -193,14 +242,17 @@ EmergencyStop::stateToString(
         case EmergencyState::SAFE:
             return "SAFE";
 
-        case EmergencyState::EMERGENCY_MQ2:
-            return "EMERGENCY_MQ2";
+        case EmergencyState::EMERGENCY_TEMP:
+            return "EMERGENCY_TEMP";
 
         case EmergencyState::EMERGENCY_BUTTON:
             return "EMERGENCY_BUTTON";
 
         case EmergencyState::EMERGENCY_FEEDBACK:
             return "EMERGENCY_FEEDBACK";
+
+        case EmergencyState::EMERGENCY_SENSOR:
+            return "EMERGENCY_SENSOR";
 
         default:
             return "UNKNOWN";

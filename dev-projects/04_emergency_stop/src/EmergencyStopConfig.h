@@ -13,7 +13,7 @@
 
 namespace EmergencyStopConfig
 {
-    constexpr uint16_t DEFAULT_MQ2_THRESHOLD = 500;
+    constexpr float DEFAULT_TEMPERATURE_THRESHOLD_C = 36.0f;
 
-    constexpr uint32_t DEFAULT_DEBOUNCE_MS = 50;
+    constexpr uint32_t DEFAULT_READ_INTERVAL_MS = 1000;
 }

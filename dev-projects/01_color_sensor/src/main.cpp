@@ -1,18 +1,7 @@
 #include <Arduino.h>
 #include "ColorSensor.h"
 
-ColorSensor::Config colorConfig =
-{
-    .pinLedR = 25,
-    .pinLedG = 26,
-    .pinLedB = 27,
-
-    .pinPhotodiode = 34,
-
-    .sampleDelayMs = 50
-};
-
-ColorSensor colorSensor(colorConfig);
+ColorSensor colorSensor(ColorSensor::defaultConfig());
 
 void setup()
 {

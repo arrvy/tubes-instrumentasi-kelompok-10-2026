@@ -28,6 +28,11 @@ class IoTBlynk
 public:
 
     /**
+     * @brief Create the default demo configuration.
+     */
+    static Config defaultConfig();
+
+    /**
      * @brief Configuration structure.
      */
     struct Config

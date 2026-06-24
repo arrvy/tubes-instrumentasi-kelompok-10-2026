@@ -10,28 +10,8 @@
 #include <Arduino.h>
 
 #include "UI.h"
-#include "UIConfig.h"
 
-UI::Config uiConfig
-{
-    .startButtonPin = 25,
-    .stopButtonPin  = 26,
-    .nextButtonPin  = 27,
-
-    .greenLedPin  = 18,
-    .yellowLedPin = 19,
-    .redLedPin    = 23,
-
-    .lcdAddress = 0x27,
-    .lcdColumns = 16,
-    .lcdRows    = 2,
-
-    .debounceMs = UIConfig::DEFAULT_BUTTON_DEBOUNCE_MS,
-
-    .refreshMs = UIConfig::DEFAULT_LCD_REFRESH_MS
-};
-
-UI ui(uiConfig);
+UI ui(UI::defaultConfig());
 
 /* ============================================================
  * Dummy Data
@@ -132,8 +112,7 @@ void loop()
     /*
      * Read button event
      */
-    ButtonEvent event =
-        ui.getButtonEvent();
+    ButtonEvent event = ui.getButtonEvent();
 
     switch(event)
     {

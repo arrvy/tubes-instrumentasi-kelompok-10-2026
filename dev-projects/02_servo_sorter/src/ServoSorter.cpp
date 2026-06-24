@@ -23,6 +23,23 @@
     {
     }
 
+ServoSorter::Config ServoSorter::defaultConfig()
+{
+    Config config;
+
+    config.servoPin = 18;
+    config.homeAngle = ServoSorterConfig::DEFAULT_HOME_ANGLE;
+    config.redAngle = ServoSorterConfig::DEFAULT_RED_ANGLE;
+    config.greenAngle = ServoSorterConfig::DEFAULT_GREEN_ANGLE;
+    config.blueAngle = ServoSorterConfig::DEFAULT_BLUE_ANGLE;
+    config.whiteAngle = ServoSorterConfig::DEFAULT_WHITE_ANGLE;
+    config.blackAngle = ServoSorterConfig::DEFAULT_BLACK_ANGLE;
+    config.sortDelayMs = ServoSorterConfig::DEFAULT_SORT_DELAY_MS;
+    config.holdTimeMs = ServoSorterConfig::DEFAULT_HOLD_TIME_MS;
+
+    return config;
+}
+
     bool ServoSorter::begin()
     {
         _servo.attach(_config.servoPin);

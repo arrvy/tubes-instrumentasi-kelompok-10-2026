@@ -1,26 +1,9 @@
 #include <Arduino.h>
 
 #include "ServoSorter.h"
-#include "ServoSorterConfig.h"
 
-ServoSorter::Config servoCfg
-{
-    .servoPin = 18,
 
-    .homeAngle = 90,
-
-    .redAngle = 30,
-    .greenAngle = 60,
-    .blueAngle = 120,
-    .whiteAngle = 150,
-    .blackAngle = 180,
-
-    .sortDelayMs = 1500,
-
-    .holdTimeMs = 500
-};
-
-ServoSorter servo(servoCfg);
+ServoSorter servo(ServoSorter::defaultConfig());
 
 void setup()
 {

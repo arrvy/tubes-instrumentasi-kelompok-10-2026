@@ -2,20 +2,7 @@
 
 #include "IoTBlynk.h"
 
-IoTBlynk::Config iotConfig
-{
-    .authToken = "TOKEN",
-
-    .ssid = "WIFI_NAME",
-
-    .password = "WIFI_PASS",
-
-    .uploadIntervalMs = 1000
-};
-
-IoTBlynk iot(
-    iotConfig
-);
+IoTBlynk iot(IoTBlynk::defaultConfig());
 
 void setup()
 {

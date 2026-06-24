@@ -184,6 +184,10 @@ public:
      * @return Debug data structure.
      */
     DebugData getDebugData() const;
+        /**
+         * @brief Create the default demo configuration.
+         */
+        static Config defaultConfig();
 
 
     /**

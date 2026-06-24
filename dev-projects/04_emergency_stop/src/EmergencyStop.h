@@ -10,6 +10,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <DHT.h>
 #include "EmergencyStopConfig.h"
 
 /**
@@ -18,9 +19,10 @@
 enum class EmergencyState
 {
     SAFE = 0,
-    EMERGENCY_MQ2,
+    EMERGENCY_TEMP,
     EMERGENCY_BUTTON,
-    EMERGENCY_FEEDBACK
+    EMERGENCY_FEEDBACK,
+    EMERGENCY_SENSOR
 };
 
 class EmergencyStop
@@ -28,19 +30,24 @@ class EmergencyStop
 public:
 
     /**
+     * @brief Create the default demo configuration.
+     */
+    static Config defaultConfig();
+
+    /**
      * @brief Library configuration.
      */
     struct Config
     {
-        uint8_t mq2Pin;
+        uint8_t dhtPin;
 
         uint8_t estopPin;
 
         uint8_t feedbackPin;
 
-        uint16_t mq2Threshold;
+        float temperatureThresholdC;
 
-        uint32_t debounceMs;
+        uint32_t readIntervalMs;
 
         bool estopActiveLow;
 
@@ -54,11 +61,13 @@ public:
     {
         EmergencyState state;
 
-        uint16_t mq2Value;
+        float temperatureC;
 
         bool estopPressed;
 
         bool feedbackLost;
+
+        bool temperatureValid;
     };
 
 public:
@@ -115,7 +124,7 @@ public:
      *
      * @return uint16_t
      */
-    uint16_t getMQ2Value() const;
+    float getTemperatureC() const;
 
     /**
      * @brief Get debug snapshot.
@@ -156,11 +165,15 @@ private:
 
     EmergencyState _state;
 
-    uint16_t _mq2Value;
+    float _temperatureC;
+
+    bool _temperatureValid;
 
     bool _estopPressed;
 
     bool _feedbackLost;
 
-    uint32_t _lastDebounceTime;
+    uint32_t _lastTemperatureReadTime;
+
+    DHT _dht;
 };

@@ -2,26 +2,7 @@
 
 #include "EmergencyStop.h"
 
-EmergencyStop::Config safetyConfig
-{
-    .mq2Pin = 34,
-
-    .estopPin = 25,
-
-    .feedbackPin = 26,
-
-    .mq2Threshold = 500,
-
-    .debounceMs = 50,
-
-    .estopActiveLow = true,
-
-    .feedbackActiveLow = true
-};
-
-EmergencyStop safety(
-    safetyConfig
-);
+EmergencyStop safety(EmergencyStop::defaultConfig());
 
 void setup()
 {

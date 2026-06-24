@@ -16,6 +16,19 @@ ColorSensor::_database[COLOR_COUNT] =
     { ColorID::BLACK, 0.00f, 0.00f, 0.00f }
 };
 
+ColorSensor::Config ColorSensor::defaultConfig()
+{
+    Config config;
+
+    config.pinLedR = 25;
+    config.pinLedG = 26;
+    config.pinLedB = 27;
+    config.pinPhotodiode = 34;
+    config.sampleDelayMs = 50;
+
+    return config;
+}
+
 ColorSensor::ColorSensor(const Config& config)
     : _config(config),
       _state(State::IDLE),

@@ -16,6 +16,11 @@ class ColorSensor
 {
 public:
 
+    /**
+     * @brief Create the default demo configuration.
+     */
+    static Config defaultConfig();
+
     enum class State
     {
         IDLE,

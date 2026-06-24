@@ -22,6 +22,25 @@ UI::UI(const Config& config)
 {
 }
 
+UI::Config UI::defaultConfig()
+{
+    Config config;
+
+    config.startButtonPin = 25;
+    config.stopButtonPin = 26;
+    config.nextButtonPin = 27;
+    config.greenLedPin = 18;
+    config.yellowLedPin = 19;
+    config.redLedPin = 23;
+    config.lcdAddress = 0x27;
+    config.lcdColumns = 16;
+    config.lcdRows = 2;
+    config.debounceMs = UIConfig::DEFAULT_BUTTON_DEBOUNCE_MS;
+    config.refreshMs = UIConfig::DEFAULT_LCD_REFRESH_MS;
+
+    return config;
+}
+
 bool UI::begin()
 {
     // Initialize Wire (I2C) with standard ESP32 pins

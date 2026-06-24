@@ -51,6 +51,11 @@ class UI
 {
 public:
 
+    /**
+     * @brief Create the default demo configuration.
+     */
+    static Config defaultConfig();
+
     struct Config
     {
         uint8_t startButtonPin;
