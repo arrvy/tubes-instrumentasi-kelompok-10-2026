@@ -50,12 +50,6 @@ enum class ButtonEvent
 class UI
 {
 public:
-
-    /**
-     * @brief Create the default demo configuration.
-     */
-    static Config defaultConfig();
-
     struct Config
     {
         uint8_t startButtonPin;
@@ -80,6 +74,11 @@ public:
 
         uint32_t refreshMs;
     };
+
+    /**
+     * @brief Create the default demo configuration.
+     */
+    static Config defaultConfig();
 
     struct DebugData
     {
