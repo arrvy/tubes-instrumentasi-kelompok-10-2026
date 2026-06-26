@@ -1,21 +1,29 @@
-# State Machine — Sistem Pemilah Warna
+# State Machine - Sistem Pemilah Warna
 
-> Dokumen ini adalah **anchor utama** semua keputusan coding.
+> Dokumen ini adalah anchor utama keputusan coding.
 > Jika ada ambiguitas logika, rujuk ke sini dulu.
 > Update dokumen ini setiap kali ada perubahan state atau transisi.
 
 ---
 
+## Catatan Revisi Hardware
+
+- Tombol START dan STOP tidak diproses kode. Keduanya langsung terhubung ke power supply untuk menyalakan dan mematikan sistem keseluruhan.
+- Emergency button NC latched tidak diproses kode. Tombol ini dipasang seri dengan jalur relay sebagai saklar manual emergency.
+- Emergency otomatis dari firmware memakai threshold DHT11.
+
+---
+
 ## Daftar State
 
-| State | Deskripsi | LED Indikator |
-|-------|-----------|---------------|
-| `IDLE` | Sistem standby, tunggu tombol START | Kuning |
-| `STARTING` | Init: servo netral, konveyor mulai, warm-up | Kuning kedip |
-| `RUNNING` | Konveyor jalan, tunggu objek masuk zona scan | Hijau |
-| `SCANNING` | Objek terdeteksi, sensor sedang baca warna | Hijau kedip |
-| `SORTING` | Servo aktif memilah berdasarkan warna | Hijau kedip |
-| `EMERGENCY` | Darurat aktif — semua aktuator mati | Merah + buzzer |
+| State | Deskripsi | Output Utama |
+|-------|-----------|--------------|
+| `IDLE` | Sistem standby setelah power hardware ON | Relay siap, motor stop |
+| `STARTING` | Init: servo netral, konveyor mulai, warm-up | Motor ramp-up |
+| `RUNNING` | Konveyor jalan, tunggu objek masuk zona scan | Motor jalan |
+| `SCANNING` | Objek terdeteksi, sensor sedang baca warna | LED RGB sensor aktif bergantian |
+| `SORTING` | Servo aktif memilah berdasarkan warna | Servo bergerak sesuai warna |
+| `EMERGENCY` | Darurat otomatis aktif dari DHT11 | Relay OFF, aktuator mati |
 
 ---
 
@@ -23,28 +31,25 @@
 
 ```mermaid
 stateDiagram-v2
-    [*] --> IDLE : power on
+    [*] --> IDLE : power hardware ON
 
-    IDLE --> STARTING : tombol START ditekan
-
+    IDLE --> STARTING : setup selesai
     STARTING --> RUNNING : init selesai (2 detik)
 
-    RUNNING --> SCANNING : objek terdeteksi\n(IR sensor / timing)
+    RUNNING --> SCANNING : objek terdeteksi\n(IR sensor)
 
     SCANNING --> SORTING : warna berhasil diidentifikasi
     SCANNING --> RUNNING : warna UNKNOWN / tidak ada objek
 
     SORTING --> RUNNING : servo kembali netral\n(setelah SERVO_HOLD_MS)
 
-    RUNNING --> IDLE : tombol STOP ditekan
+    IDLE --> EMERGENCY : DHT11 suhu > threshold
+    STARTING --> EMERGENCY : DHT11 suhu > threshold
+    RUNNING --> EMERGENCY : DHT11 suhu > threshold
+    SCANNING --> EMERGENCY : DHT11 suhu > threshold
+    SORTING --> EMERGENCY : DHT11 suhu > threshold
 
-    IDLE --> EMERGENCY : MQ2 > threshold\nATAU button NC terbuka
-    STARTING --> EMERGENCY : MQ2 > threshold\nATAU button NC terbuka
-    RUNNING --> EMERGENCY : MQ2 > threshold\nATAU button NC terbuka
-    SCANNING --> EMERGENCY : MQ2 > threshold\nATAU button NC terbuka
-    SORTING --> EMERGENCY : MQ2 > threshold\nATAU button NC terbuka
-
-    EMERGENCY --> IDLE : tombol RESET ditekan manual
+    EMERGENCY --> IDLE : reset software saat suhu aman
 ```
 
 ---
@@ -53,64 +58,64 @@ stateDiagram-v2
 
 | Dari State | Event / Trigger | Ke State | Aksi saat transisi |
 |------------|-----------------|----------|--------------------|
-| `IDLE` | Tombol START ditekan | `STARTING` | Init servo netral, mulai konveyor pelan |
-| `STARTING` | Timer 2000ms elapsed | `RUNNING` | Konveyor full speed, LCD update |
-| `RUNNING` | Objek terdeteksi di zona scan | `SCANNING` | Konveyor slow/stop, mulai baca sensor |
+| `IDLE` | Sistem mendapat power dari tombol hardware | `STARTING` | Init servo netral, mulai konveyor pelan |
+| `STARTING` | Timer 2000 ms elapsed | `RUNNING` | Konveyor full speed, LCD update |
+| `RUNNING` | Objek terdeteksi di zona scan | `SCANNING` | Baca sensor warna |
 | `SCANNING` | Warna berhasil diidentifikasi | `SORTING` | Catat warna, hitung timing servo |
 | `SCANNING` | Warna UNKNOWN atau noise | `RUNNING` | Log UNKNOWN, lanjut |
-| `SORTING` | SERVO_HOLD_MS elapsed | `RUNNING` | Servo netral, counter++ |
-| `RUNNING` | Tombol STOP ditekan | `IDLE` | Konveyor stop, servo netral |
-| `ANY` | MQ2 ADC > GAS_THRESHOLD | `EMERGENCY` | Relay OFF, motor stop, servo netral, buzzer ON |
-| `ANY` | Button NC terbuka (ditekan) | `EMERGENCY` | Sama seperti di atas |
-| `ANY` | Relay feedback LOW (aktuator mati tiba-tiba) | `EMERGENCY` | Log, tampilkan di LCD |
-| `EMERGENCY` | Tombol RESET ditekan manual | `IDLE` | Relay ON, buzzer OFF, LCD reset |
+| `SORTING` | `SERVO_HOLD_MS` elapsed | `RUNNING` | Servo netral, counter++ |
+| `ANY` | DHT11 suhu > threshold | `EMERGENCY` | Relay OFF, motor stop, servo netral |
+| `EMERGENCY` | Reset software dan suhu sudah aman | `IDLE` | Relay ON, LCD reset |
+
+Tombol STOP hardware memutus power sistem, sehingga tidak ada transisi software khusus untuk STOP.
 
 ---
 
-## Aturan Emergency (Prioritas Tertinggi)
+## Aturan Emergency Otomatis
 
-Emergency bisa trigger dari state manapun dan kapan saja.
-Implementasi di kode: cek emergency di awal setiap iterasi `loop()`, sebelum switch-case state.
+Emergency otomatis bisa trigger dari state manapun dan kapan saja.
+Implementasi di kode: cek DHT11 di awal setiap iterasi `loop()`, sebelum switch-case state.
 
-```
+```text
 Setiap loop():
-  1. cek MQ2 ADC → jika > threshold → EMERGENCY
-  2. cek relay feedback GPIO → jika LOW (aktuator mati tiba2) → EMERGENCY  
-  3. cek button NC → jika terbuka → EMERGENCY
-  4. baru masuk switch-case state machine
+  1. baca DHT11 sesuai interval
+  2. jika pembacaan gagal -> EMERGENCY_SENSOR
+  3. jika suhu >= threshold -> EMERGENCY_TEMP
+  4. jika aman -> lanjut state machine utama
 ```
+
+Emergency manual dari NC latched button bekerja secara hardware dengan memutus jalur relay, bukan melalui `digitalRead()`.
 
 ---
 
-## Perilaku Tiap State (Detail)
+## Perilaku Tiap State
 
 ### IDLE
 - Konveyor: STOP
-- Servo: posisi netral (90°)
-- Relay: ON (aktuator siap, tapi motor stop)
-- LCD: `IDLE / Tekan START`
-- Polling: MQ2 tetap dimonitor
+- Servo: posisi netral 90 derajat
+- Relay: ON jika suhu aman
+- LCD: `IDLE / Standby`
+- Polling: DHT11 tetap dimonitor
 
 ### STARTING
-- Konveyor: mulai pelan (PWM ramp-up)
+- Konveyor: mulai pelan atau sesuai implementasi
 - Servo: set ke posisi netral
 - LCD: `Starting...`
-- Timer: 2000ms lalu transisi ke RUNNING
+- Timer: 2000 ms lalu transisi ke RUNNING
 
 ### RUNNING
-- Konveyor: full speed (MOTOR_SPEED_DEFAULT)
+- Konveyor: full speed
 - Servo: netral
-- Polling: tunggu trigger objek (IR break-beam atau timer)
+- Polling: tunggu trigger objek dari IR sensor
 - LCD: `RUNNING / [warna terakhir]`
 
 ### SCANNING
-- Konveyor: slow atau stop (opsional, tergantung desain)
 - Urutan baca sensor:
   1. Matikan semua LED
-  2. Baca ambient ADC → simpan
-  3. LED R ON → baca ADC → kompensasi → simpan
-  4. LED G ON → baca ADC → kompensasi → simpan
-  5. LED B ON → baca ADC → kompensasi → simpan
+  2. Baca ambient ADC dari LDR
+  3. LED R ON, baca ADC, kompensasi
+  4. LED G ON, baca ADC, kompensasi
+  5. LED B ON, baca ADC, kompensasi
   6. Normalisasi: `r_norm = R / (R+G+B)`, dst
   7. Nearest neighbor vs database
   8. Return ColorID
@@ -118,17 +123,15 @@ Setiap loop():
 
 ### SORTING
 - Servo aktif sesuai warna terdeteksi
-- Timer: tahan SERVO_HOLD_MS
+- Timer: tahan `SERVO_HOLD_MS`
 - Counter increment
-- MQTT publish color + count
+- MQTT publish color + count jika modul IoT aktif
 - LCD: `Sorting: [WARNA]`
 
 ### EMERGENCY
-- Relay: OFF (aktuator mati total via hardware)
-- Motor: STOP (software + hardware)
-- Servo: netral (tidak bisa bergerak karena relay OFF)
-- Buzzer: ON, pola alert
-- LED: Merah ON, hijau/kuning OFF
-- LCD: `!! EMERGENCY !!` + penyebab
-- MQTT: publish emergency event
-- Loop: hanya polling tombol RESET, MQ2, dan relay feedback
+- Relay: OFF
+- Motor: STOP
+- Servo: netral secara software, lalu aktuator mati karena relay OFF
+- LCD: `!! EMERGENCY !!` + penyebab otomatis
+- MQTT: publish emergency event jika modul IoT aktif
+- Loop: hanya reset jika kondisi DHT11 sudah aman

@@ -1,54 +1,47 @@
-# 04 — Emergency Stop
+# 04 - Emergency Stop
 
-> Dev project untuk sistem keamanan: sensor gas MQ-2, relay, dan tombol NC fisik.
-> Kode yang sudah teruji dipindah ke `firmware/src/emergency/`.
+> Dev project untuk sistem keamanan otomatis berbasis DHT11 dan relay.
+> Emergency manual memakai button NC latched secara hardware seri dengan relay, tidak dibaca oleh kode.
 
-**PIC:** [Nama] | **Status:** ⏳ Todo
+**PIC:** [Nama] | **Status:** Todo
 
 ---
 
 ## Tujuan
 
-- [ ] Baca ADC MQ-2/DHT11 periodik, deteksi jika melampaui threshold
-- [ ] Deteksi tombol NC fisik (circuit terbuka = ditekan = bahaya)
-- [ ] Saat trigger: nonaktifkan relay → semua aktuator mati total
-- [ ] Kirim sinyal ke state machine bahwa EMERGENCY aktif
-- [ ] Sistem tidak bisa resume otomatis — harus reset manual
+- [ ] Baca suhu DHT11 periodik.
+- [ ] Trigger emergency otomatis jika suhu melewati threshold.
+- [ ] Saat trigger: nonaktifkan relay sehingga aktuator mati total.
+- [ ] Kirim sinyal ke state machine bahwa `EMERGENCY` aktif.
+- [ ] Sistem tidak resume otomatis sebelum kondisi aman dan reset software dilakukan.
 
 ---
 
 ## Arsitektur Safety
 
+```text
+ESP32 GPIO13 -> Relay control
+ESP32 GPIO32 <-> DHT11 data
+
+Jalur daya / kontrol aktuator:
+Power/relay path -> Button NC latched -> Relay -> Aktuator
+
+Emergency otomatis:
+DHT11 suhu >= threshold -> ESP32 mematikan relay
+
+Emergency manual:
+Button NC latched ditekan -> jalur relay terbuka secara hardware
 ```
-                    ┌─── GPIO27 (Relay Control) ──► Koil Relay
-ESP32               │
-                    └─── GPIO39 (Feedback) ◄───── Status jalur daya
-
-Jalur daya aktuator:
-PSU → [Relay NO contact] → [Button NC] → Aktuator (Motor + Servo)
-         ↑                      ↑
-    Dikontrol GPIO27       Hardware cut
-    (software estop)       (hardware estop)
-
-Jika salah satu terbuka → aktuator mati.
-ESP32 deteksi via GPIO feedback → pindah ke state EMERGENCY.
-```
-
-> Relay NO: normally open → relay harus aktif agar aktuator menyala.
-> Keuntungan: ESP32 mati/crash → relay lepas → aktuator otomatis mati (fail-safe).
 
 ---
 
 ## Hardware
 
-| Komponen | Keterangan |Note|
-|----------|------------|---|
-| MQ-2 | Sensor gas LPG/asap, output analog ke ADC. Warm-up 30 detik |
-| DHT-11 | Sensor Suhu dan Kelembapan, Output digital dengan library khusus. refresh rate 1 Hz |
-| Relay | Relay 5V (contoh: SRD-05VDC-SL-C), konfigurasi NO |
-| Button E-Stop | NC push button, warna merah, ukuran besar, mudah dijangkau |
-| Button Reset | NO push button untuk clear state EMERGENCY | Bisa tidak diperlukan |
-| DHT22 | Opsional — sensor suhu, trigger tambahan jika suhu > threshold |
+| Komponen | Keterangan |
+|----------|------------|
+| DHT11 | Sensor suhu dan kelembapan, data digital, refresh sekitar 1 Hz |
+| Relay | Relay 5V, HIGH = relay aktif sesuai default kode |
+| Button E-Stop NC Latched | Dipasang seri dengan relay sebagai saklar emergency manual hardware |
 
 ---
 
@@ -56,13 +49,10 @@ ESP32 deteksi via GPIO feedback → pindah ke state EMERGENCY.
 
 | GPIO | Fungsi | Catatan |
 |------|--------|---------|
-| 34 | MQ-2 AO → ADC | ADC1, input-only GPIO |
-| 35 | DHT22 data (opsional) | Input, 10kΩ pull-up |
-| 27 | Relay coil control | OUTPUT — HIGH = relay aktif = aktuator ON |
-| 36 | Button E-Stop NC | INPUT_PULLUP — LOW normal, HIGH saat ditekan |
-| 39 | Button Reset | INPUT_PULLUP — LOW normal, HIGH saat ditekan |
-| 5 | LED Merah indikator | OUTPUT — menyala saat EMERGENCY |
-| 15 | Buzzer | OUTPUT PWM |
+| 32 | DHT11 data | Input data DHT11 |
+| 13 | Relay coil control | OUTPUT, HIGH = relay aktif |
+
+`estopPin` dan `feedbackPin` pada kode default bernilai `255`, artinya tidak dipakai. Emergency button manual ditangani hardware.
 
 ---
 
@@ -70,36 +60,17 @@ ESP32 deteksi via GPIO feedback → pindah ke state EMERGENCY.
 
 | Command | Fungsi |
 |---------|--------|
-| `status` | Print nilai gas ADC, suhu, dan state relay |
-| `cal` | Print gas ADC tiap 1 detik untuk kalibrasi baseline |
-| `trig` | Simulasi trigger EMERGENCY dari serial |
-| `rst` | Reset EMERGENCY state (untuk testing) |
-| `relay on` | Aktifkan relay manual |
-| `relay off` | Nonaktifkan relay manual |
-
----
-
-## Kalibrasi MQ-2
-
-Lakukan setelah warm-up 30 detik:
-
-| Kondisi | ADC Value (0–4095) |
-|---------|--------------------|
-| Udara bersih — baseline | |
-| Dekat korek api (gas referensi ringan) | |
-| Asap rokok dekat sensor | |
-| **Threshold yang ditetapkan** | |
-
-Threshold dicatat ke `GAS_THRESHOLD_ADC` di `config.h`.
+| `status` | Print suhu DHT11 dan state relay |
+| `rst` | Reset emergency state saat kondisi sudah aman |
+| `relay on` | Aktifkan relay manual untuk testing |
+| `relay off` | Nonaktifkan relay manual untuk testing |
 
 ---
 
 ## Checklist Sebelum Pindah ke Firmware
 
-- [ ] MQ-2/DHT11 bisa deteksi gas di atas threshold yang wajar
-- [ ] NC button: terbuka (ditekan) = trigger EMERGENCY
-- [ ] Relay mati saat EMERGENCY aktif
-- [ ] State tidak bisa clear tanpa reset manual
-- [ ] Feedback GPIO ESP32 bisa deteksi kondisi relay
-- [ ] LED merah + buzzer aktif saat EMERGENCY
-- [ ] Kode siap dipindah ke `firmware/src/emergency/`
+- [ ] DHT11 terbaca stabil.
+- [ ] Threshold suhu sesuai kondisi demo.
+- [ ] Relay mati saat emergency otomatis aktif.
+- [ ] Button NC latched terbukti memutus relay secara hardware.
+- [ ] Kode siap dipindah ke `firmware/src/emergency/`.

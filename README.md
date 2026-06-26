@@ -2,7 +2,7 @@
 ### Tugas Besar Praktikum Instrumentasi 2026
 
 > Sistem otomatis memilah kubus berwarna menggunakan sensor warna diskrit (Photodioda + LED RGB),
-> konveyor belt, servo sweeper, emergency stop berbasis sensor gas, dan monitoring IoT via MQTT + Node-RED.
+> konveyor belt, servo sweeper, emergency stop otomatis berbasis DHT11, emergency manual hardware, dan monitoring IoT via MQTT + Node-RED.
 > Platform: ESP32 WROOM-32 | PlatformIO + Arduino Framework
 
 ---
@@ -55,9 +55,9 @@ Kubus masuk
 
 Paralel sepanjang waktu:
 ├── LCD                  → tampilkan state + warna + counter
-├── LED 3 warna          → indikator state machine
-├── MQ-2/DHT11           → monitor gas, trigger EMERGENCY jika > threshold
-├── Button NC            → hardware emergency stop
+├── LED RGB sensor       → LED R/G/B untuk pembacaan warna
+├── DHT11                → trigger EMERGENCY otomatis jika suhu > threshold
+├── Button NC latched    → hardware emergency stop seri dengan relay
 ├── Relay                → putus daya aktuator saat EMERGENCY
 └── MQTT/Blnyk/Modbus    → publish state/warna/counter/gas ke Node-RED
 ```
@@ -76,7 +76,7 @@ tubes-instrumentasi/
 │   ├── 01_color_sensor/            ← R&D photodioda + LED RGB
 │   ├── 02_servo_sorter/            ← kontrol servo + logika sorting
 │   ├── 03_conveyor_motor/          ← motor DC + PWM speed control
-│   ├── 04_emergency_stop/          ← MQ-2 + relay + tombol NC
+│   ├── 04_emergency_stop/          ← DHT11 + relay + emergency hardware
 │   ├── 05_ui_display/             ← LCD I2C + layout per state
 │   ├── 06_iot_mqtt/                ← WiFi + MQTT + Node-RED
 │   └── 07_integration_test/        ← end-to-end test semua modul
@@ -155,7 +155,7 @@ Kembangkan, kalibrasi, dan test di sini dulu sebelum integrasi ke firmware.
 | 01 | `01_color_sensor` | R&D sensor warna diskrit | [Nama] | 🔄 |
 | 02 | `02_servo_sorter` | Kontrol servo + logika sorting | [Nama] | ⏳ |
 | 03 | `03_conveyor_motor` | Motor DC + PWM speed | [Nama] | ⏳ |
-| 04 | `04_emergency_stop` | Sensor gas MQ-2 + tombol NC + relay | [Nama] | ⏳ |
+| 04 | `04_emergency_stop` | DHT11 + relay, emergency manual via hardware | [Nama] | ⏳ |
 | 05 | `05_lcd_display` | LCD I2C 16x2 + layout state | [Nama] | ⏳ |
 | 06 | `06_iot_mqtt` | WiFi + MQTT + Node-RED | [Nama] | ⏳ |
 | 07 | `07_integration_test` | End-to-end test | Semua | ⏳ |
@@ -215,32 +215,26 @@ Detail lengkap: [`docs/state_machine.md`](docs/state_machine.md)
 
 ---
 
-## Pin Mapping (Ringkasan) (BELUM FIX)
+## Pin Mapping (Ringkasan)
 
 > Detail lengkap + catatan: [`docs/pin_mapping.md`](docs/pin_mapping.md)
 > Nilai `#define`: [`firmware/src/config.h`](firmware/src/config.h)
 
 | GPIO | Fungsi | Komponen | Catatan |
 |------|--------|----------|---------|
-| 32 | ADC Photodioda | Color sensor | ADC1 ch4 — aman dengan WiFi |
-| 33 | LED Merah sensor | RGB LED | OUTPUT, R=220Ω |
-| 25 | LED Hijau sensor | RGB LED | OUTPUT, R=150Ω |
-| 26 | LED Biru sensor | RGB LED | OUTPUT, R=100Ω |
-| 18 | Servo 1 | Sweeper | PWM 50Hz |
-| 19 | Servo 2 | Sweeper | PWM 50Hz |
-| 16 | Motor IN1 | L298N | Arah konveyor |
-| 17 | Motor IN2 | L298N | Arah konveyor |
-| 23 | Motor ENA | L298N | PWM speed |
+| 35 | IR sensor | Object trigger/counter | Input-only |
+| 32 | DHT11 data | Emergency otomatis | Threshold suhu |
+| 33 | LDR | Color sensor | ADC1, aman dengan WiFi |
+| 16 | Servo | Sweeper | PWM 50Hz |
+| 13 | Relay control | Relay safety | HIGH = relay aktif |
 | 21 | SDA | LCD I2C | I2C bus |
 | 22 | SCL | LCD I2C | I2C bus |
-| 34 | ADC Gas | MQ-2 | ADC1, input-only |
-| 27 | Relay control | Relay safety | OUTPUT |
-| 36 | Button Start | Push button NO | INPUT_PULLUP |
-| 39 | Button E-Stop | Push button NC | INPUT_PULLUP |
-| 2 | LED Hijau indikator | State LED | Running |
-| 4 | LED Kuning indikator | State LED | Idle/standby |
-| 5 | LED Merah indikator | State LED | Emergency |
-| 15 | Buzzer | Passive buzzer | PWM tone |
+| 14 | Motor ENB | L298N | PWM speed |
+| 27 | Motor IN3 | L298N | Arah konveyor |
+| 26 | Motor IN4 | L298N | Arah konveyor |
+| 15 | LED R | RGB LED sensor | OUTPUT |
+| 2 | LED G | RGB LED sensor | OUTPUT |
+| 4 | LED B | RGB LED sensor | OUTPUT |
 
 > ⚠️ **ADC2 (GPIO 0,2,4,12-15,25-27) tidak bisa dipakai bersamaan dengan WiFi aktif — pakai ADC1 untuk semua sensor.**
 > ⚠️ **GPIO 6–11 terhubung ke flash internal — jangan dipakai.**

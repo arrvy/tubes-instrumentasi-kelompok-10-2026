@@ -42,9 +42,9 @@ Waktu tempuh            = jarak / kecepatan = ___ ms
 ### Wiring L298N
 
 ```
-ESP32 GPIO16 ── L298N IN1
-ESP32 GPIO17 ── L298N IN2
-ESP32 GPIO23 ── L298N ENA  (PWM)
+ESP32 GPIO27 ── L298N IN3
+ESP32 GPIO26 ── L298N IN4
+ESP32 GPIO14 ── L298N ENB  (PWM)
 PSU 12V (+)  ── L298N 12V
 GND          ── L298N GND + ESP32 GND (common ground!)
 L298N OUT1/2 ── Motor DC terminal
@@ -56,9 +56,9 @@ L298N OUT1/2 ── Motor DC terminal
 
 | GPIO | Fungsi |
 |------|--------|
-| 16 | L298N IN1 (arah) |
-| 17 | L298N IN2 (arah) |
-| 23 | L298N ENA (PWM speed) |
+| 27 | L298N IN3 (arah) |
+| 26 | L298N IN4 (arah) |
+| 14 | L298N ENB (PWM speed) |
 
 ---
 

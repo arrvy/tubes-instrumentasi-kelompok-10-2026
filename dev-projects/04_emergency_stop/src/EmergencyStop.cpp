@@ -28,13 +28,15 @@ EmergencyStop::Config EmergencyStop::defaultConfig()
 {
     Config config;
 
-    config.dhtPin = 35;
-    config.estopPin = 25;
-    config.feedbackPin = 26;
+    config.dhtPin = 32;
+    config.estopPin = 255;
+    config.feedbackPin = 255;
+    config.relayPin = 13;
     config.temperatureThresholdC = EmergencyStopConfig::DEFAULT_TEMPERATURE_THRESHOLD_C;
     config.readIntervalMs = EmergencyStopConfig::DEFAULT_READ_INTERVAL_MS;
     config.estopActiveLow = true;
     config.feedbackActiveLow = true;
+    config.relayActiveHigh = true;
 
     return config;
 }
@@ -43,15 +45,28 @@ bool EmergencyStop::begin()
 {
     _dht.begin();
 
-    pinMode(
-        _config.estopPin,
-        INPUT_PULLUP
-    );
+    if (_config.estopPin != 255)
+    {
+        pinMode(
+            _config.estopPin,
+            INPUT_PULLUP
+        );
+    }
+
+    if (_config.feedbackPin != 255)
+    {
+        pinMode(
+            _config.feedbackPin,
+            INPUT_PULLUP
+        );
+    }
 
     pinMode(
-        _config.feedbackPin,
-        INPUT_PULLUP
+        _config.relayPin,
+        OUTPUT
     );
+
+    applyRelayOutput();
 
     return true;
 }
@@ -59,6 +74,7 @@ bool EmergencyStop::begin()
 void EmergencyStop::update()
 {
     processSafety();
+    applyRelayOutput();
 }
 
 void EmergencyStop::processSafety()
@@ -77,25 +93,39 @@ void EmergencyStop::processSafety()
             !isnan(_temperatureC);
     }
 
-    bool estopRaw =
-        digitalRead(
-            _config.estopPin
-        );
+    if (_config.estopPin != 255)
+    {
+        bool estopRaw =
+            digitalRead(
+                _config.estopPin
+            );
 
-    bool feedbackRaw =
-        digitalRead(
-            _config.feedbackPin
-        );
+        _estopPressed =
+            _config.estopActiveLow ?
+            !estopRaw :
+            estopRaw;
+    }
+    else
+    {
+        _estopPressed = false;
+    }
 
-    _estopPressed =
-        _config.estopActiveLow ?
-        !estopRaw :
-        estopRaw;
+    if (_config.feedbackPin != 255)
+    {
+        bool feedbackRaw =
+            digitalRead(
+                _config.feedbackPin
+            );
 
-    _feedbackLost =
-        _config.feedbackActiveLow ?
-        !feedbackRaw :
-        feedbackRaw;
+        _feedbackLost =
+            _config.feedbackActiveLow ?
+            !feedbackRaw :
+            feedbackRaw;
+    }
+    else
+    {
+        _feedbackLost = false;
+    }
 
     if(!_temperatureValid)
     {
@@ -136,6 +166,14 @@ void EmergencyStop::processSafety()
     }
 }
 
+void EmergencyStop::applyRelayOutput()
+{
+    const bool relayOn = (_state == EmergencyState::SAFE);
+    const int level = (relayOn == _config.relayActiveHigh) ? HIGH : LOW;
+
+    digitalWrite(_config.relayPin, level);
+}
+
 void EmergencyStop::resetEmergency()
 {
     if(!_temperatureValid)
@@ -161,6 +199,8 @@ void EmergencyStop::resetEmergency()
 
     _state =
         EmergencyState::SAFE;
+
+    applyRelayOutput();
 }
 
 bool EmergencyStop::isEmergency() const

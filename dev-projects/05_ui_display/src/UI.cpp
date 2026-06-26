@@ -26,12 +26,12 @@ UI::Config UI::defaultConfig()
 {
     Config config;
 
-    config.startButtonPin = 25;
-    config.stopButtonPin = 26;
-    config.nextButtonPin = 27;
-    config.greenLedPin = 18;
-    config.yellowLedPin = 19;
-    config.redLedPin = 23;
+    config.startButtonPin = 255;
+    config.stopButtonPin = 255;
+    config.nextButtonPin = 255;
+    config.greenLedPin = 255;
+    config.blueLedPin = 255;
+    config.redLedPin = 255;
     config.lcdAddress = 0x27;
     config.lcdColumns = 16;
     config.lcdRows = 2;
@@ -53,19 +53,20 @@ bool UI::begin()
     _lcd.print("System Init...");
 
     // Initialize button pins
-    pinMode(_config.startButtonPin, INPUT_PULLUP);
-    pinMode(_config.stopButtonPin, INPUT_PULLUP);
-    pinMode(_config.nextButtonPin, INPUT_PULLUP);
+    if (_config.startButtonPin != 255) pinMode(_config.startButtonPin, INPUT_PULLUP);
+    if (_config.stopButtonPin != 255) pinMode(_config.stopButtonPin, INPUT_PULLUP);
+    if (_config.nextButtonPin != 255) pinMode(_config.nextButtonPin, INPUT_PULLUP);
 
-    // Initialize LED pins
-    pinMode(_config.greenLedPin, OUTPUT);
-    pinMode(_config.yellowLedPin, OUTPUT);
-    pinMode(_config.redLedPin, OUTPUT);
+    // Status LEDs are optional. By default pins 15/2/4 are reserved
+    // for the color sensor RGB LED, so UI does not drive them.
+    if (_config.greenLedPin != 255) pinMode(_config.greenLedPin, OUTPUT);
+    if (_config.blueLedPin != 255) pinMode(_config.blueLedPin, OUTPUT);
+    if (_config.redLedPin != 255) pinMode(_config.redLedPin, OUTPUT);
 
     // Turn off all LEDs initially
-    digitalWrite(_config.greenLedPin, LOW);
-    digitalWrite(_config.yellowLedPin, LOW);
-    digitalWrite(_config.redLedPin, LOW);
+    if (_config.greenLedPin != 255) digitalWrite(_config.greenLedPin, LOW);
+    if (_config.blueLedPin != 255) digitalWrite(_config.blueLedPin, LOW);
+    if (_config.redLedPin != 255) digitalWrite(_config.redLedPin, LOW);
 
     delay(500);
     _lcd.clear();
@@ -144,7 +145,7 @@ void UI::updateButtons()
     uint32_t now = millis();
 
     // START button
-    if (digitalRead(_config.startButtonPin) == LOW)
+    if ((_config.startButtonPin != 255) && (digitalRead(_config.startButtonPin) == LOW))
     {
         if (now - startDebounceTime > _config.debounceMs)
         {
@@ -154,7 +155,7 @@ void UI::updateButtons()
     }
 
     // STOP button
-    if (digitalRead(_config.stopButtonPin) == LOW)
+    if ((_config.stopButtonPin != 255) && (digitalRead(_config.stopButtonPin) == LOW))
     {
         if (now - stopDebounceTime > _config.debounceMs)
         {
@@ -164,7 +165,7 @@ void UI::updateButtons()
     }
 
     // NEXT PAGE button
-    if (digitalRead(_config.nextButtonPin) == LOW)
+    if ((_config.nextButtonPin != 255) && (digitalRead(_config.nextButtonPin) == LOW))
     {
         if (now - nextDebounceTime > _config.debounceMs)
         {
@@ -247,34 +248,34 @@ void UI::updateLCD()
 void UI::updateLEDs()
 {
     // Turn off all LEDs first
-    digitalWrite(_config.greenLedPin, LOW);
-    digitalWrite(_config.yellowLedPin, LOW);
-    digitalWrite(_config.redLedPin, LOW);
+    if (_config.greenLedPin != 255) digitalWrite(_config.greenLedPin, LOW);
+    if (_config.blueLedPin != 255) digitalWrite(_config.blueLedPin, LOW);
+    if (_config.redLedPin != 255) digitalWrite(_config.redLedPin, LOW);
 
     // Set LEDs based on state
     switch (_state)
     {
         case SystemState::IDLE:
         {
-            digitalWrite(_config.greenLedPin, HIGH);
+            if (_config.greenLedPin != 255) digitalWrite(_config.greenLedPin, HIGH);
             break;
         }
 
         case SystemState::RUNNING:
         {
-            digitalWrite(_config.yellowLedPin, HIGH);
+            if (_config.blueLedPin != 255) digitalWrite(_config.blueLedPin, HIGH);
             break;
         }
 
         case SystemState::STOPPED:
         {
-            digitalWrite(_config.greenLedPin, HIGH);
+            if (_config.greenLedPin != 255) digitalWrite(_config.greenLedPin, HIGH);
             break;
         }
 
         case SystemState::EMERGENCY:
         {
-            digitalWrite(_config.redLedPin, HIGH);
+            if (_config.redLedPin != 255) digitalWrite(_config.redLedPin, HIGH);
             break;
         }
 

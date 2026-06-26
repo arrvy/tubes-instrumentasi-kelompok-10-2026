@@ -27,7 +27,7 @@ ServoSorter::Config ServoSorter::defaultConfig()
 {
     Config config;
 
-    config.servoPin = 18;
+    config.servoPin = 16;
     config.homeAngle = ServoSorterConfig::DEFAULT_HOME_ANGLE;
     config.redAngle = ServoSorterConfig::DEFAULT_RED_ANGLE;
     config.greenAngle = ServoSorterConfig::DEFAULT_GREEN_ANGLE;

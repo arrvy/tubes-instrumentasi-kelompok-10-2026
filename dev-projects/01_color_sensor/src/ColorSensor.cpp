@@ -20,10 +20,10 @@ ColorSensor::Config ColorSensor::defaultConfig()
 {
     Config config;
 
-    config.pinLedR = 25;
-    config.pinLedG = 26;
-    config.pinLedB = 27;
-    config.pinPhotodiode = 34;
+    config.pinLedR = 15;
+    config.pinLedG = 2;
+    config.pinLedB = 4;
+    config.pinPhotodiode = 33;
     config.sampleDelayMs = 50;
 
     return config;

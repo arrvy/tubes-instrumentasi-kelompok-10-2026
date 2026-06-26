@@ -15,11 +15,6 @@
 class IRTrigger final
 {
 public:
-    /**
-     * @brief Create the default demo configuration.
-     */
-    static Config defaultConfig();
-
     enum class State : uint8_t
     {
         WAIT_OBJECT,
@@ -45,6 +40,11 @@ public:
         uint32_t sampleIntervalMs;
         uint32_t initialCounter;
     };
+
+    /**
+     * @brief Create the default demo configuration.
+     */
+    static Config defaultConfig();
 
     struct DebugData
     {

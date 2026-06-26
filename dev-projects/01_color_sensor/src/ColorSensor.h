@@ -16,11 +16,6 @@ class ColorSensor
 {
 public:
 
-    /**
-     * @brief Create the default demo configuration.
-     */
-    static Config defaultConfig();
-
     enum class State
     {
         IDLE,
@@ -91,6 +86,11 @@ public:
 
         uint32_t sampleDelayMs;
     };
+
+    /**
+     * @brief Create the default demo configuration.
+     */
+    static Config defaultConfig();
 
 public:
 

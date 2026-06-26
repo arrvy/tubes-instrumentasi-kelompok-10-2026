@@ -30,11 +30,6 @@ class EmergencyStop
 public:
 
     /**
-     * @brief Create the default demo configuration.
-     */
-    static Config defaultConfig();
-
-    /**
      * @brief Library configuration.
      */
     struct Config
@@ -45,6 +40,8 @@ public:
 
         uint8_t feedbackPin;
 
+        uint8_t relayPin;
+
         float temperatureThresholdC;
 
         uint32_t readIntervalMs;
@@ -52,7 +49,14 @@ public:
         bool estopActiveLow;
 
         bool feedbackActiveLow;
+
+        bool relayActiveHigh;
     };
+
+    /**
+     * @brief Create the default demo configuration.
+     */
+    static Config defaultConfig();
 
     /**
      * @brief Debug snapshot.
@@ -120,7 +124,7 @@ public:
     EmergencyState getState() const;
 
     /**
-     * @brief Read MQ2 value.
+     * @brief Read latest DHT11 temperature value.
      *
      * @return uint16_t
      */
@@ -151,6 +155,8 @@ private:
      * @brief Update safety logic.
      */
     void processSafety();
+
+    void applyRelayOutput();
 
     /**
      * @brief Convert enum to string.

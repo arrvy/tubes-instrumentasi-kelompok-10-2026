@@ -60,7 +60,7 @@ public:
 
         uint8_t greenLedPin;
 
-        uint8_t yellowLedPin;
+        uint8_t blueLedPin;
 
         uint8_t redLedPin;
 

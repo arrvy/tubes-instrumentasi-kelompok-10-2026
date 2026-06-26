@@ -59,15 +59,15 @@ Nearest Neighbor:
 ### Wiring Breadboard
 
 ```
-GPIO33 ──[220Ω]── LED Merah (+)  ──► LED Merah (-)── GND
-GPIO25 ──[150Ω]── LED Hijau (+)  ──► LED Hijau (-)── GND
-GPIO26 ──[100Ω]── LED Biru (+)   ──► LED Biru  (-)── GND
+GPIO15 ──[220Ω]── LED Merah (+)  ──► LED Merah (-)── GND
+GPIO2  ──[150Ω]── LED Hijau (+)  ──► LED Hijau (-)── GND
+GPIO4  ──[100Ω]── LED Biru (+)   ──► LED Biru  (-)── GND
 
-3.3V ──[10kΩ]── GPIO32 (ADC) ──── Photodioda Cathode
+3.3V ──[10kΩ]── GPIO33 (ADC) ──── Photodioda Cathode
                                    Photodioda Anode ── GND
 ```
 
-> Cahaya makin kuat → resistansi photodioda turun → tegangan di GPIO32 turun → ADC value turun.
+> Cahaya makin kuat → resistansi photodioda turun → tegangan di GPIO33 turun → ADC value turun.
 > Artinya: **ADC rendah = pantulan kuat = warna cocok dengan LED yang menyala.**
 
 ---
@@ -76,10 +76,10 @@ GPIO26 ──[100Ω]── LED Biru (+)   ──► LED Biru  (-)── GND
 
 | GPIO | Fungsi |
 |------|--------|
-| 33 | LED Merah |
-| 25 | LED Hijau |
-| 26 | LED Biru |
-| 32 | ADC Photodioda (ADC1 ch4) |
+| 15 | LED Merah |
+| 2 | LED Hijau |
+| 4 | LED Biru |
+| 33 | LDR / ADC sensor warna |
 
 ---
 

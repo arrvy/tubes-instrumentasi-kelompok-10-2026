@@ -1,10 +1,10 @@
 #include <Arduino.h>
 
-constexpr uint8_t PIN_LED_R = 33;
-constexpr uint8_t PIN_LED_G = 25;
-constexpr uint8_t PIN_LED_B = 26;
+constexpr uint8_t PIN_LED_R = 15;
+constexpr uint8_t PIN_LED_G = 2;
+constexpr uint8_t PIN_LED_B = 4;
 
-constexpr uint8_t PIN_PHOTODIODE = 34;
+constexpr uint8_t PIN_PHOTODIODE = 33;
 
 void setup()
 {

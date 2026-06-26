@@ -1,8 +1,6 @@
 # System Flow & Interface Contract Antar Subsistem
 
-> Dokumen ini menjawab: subsistem A menghasilkan data apa, formatnya bagaimana,
-> dan siapa yang mengkonsumsinya.
-> Ini yang memungkinkan tiap orang coding bagiannya secara independen.
+> Dokumen ini menjelaskan data antar subsistem supaya tiap modul bisa dikembangkan mandiri.
 
 ---
 
@@ -10,66 +8,61 @@
 
 ```mermaid
 graph TD
+    subgraph HARDWARE_POWER["Hardware Power & Emergency"]
+        STARTSTOP["START/STOP switch\nlangsung ke power supply"]
+        ESTOP["Emergency NC latched\nseri dengan relay"]
+    end
+
     subgraph INPUT
-        BTN_START[Button START/STOP]
-        BTN_ESTOP[Button E-Stop NC]
-        MQ2[Sensor Gas MQ-2]
-        IR[IR Sensor zona scan]
+        DHT["DHT11\nGPIO32"]
+        IR["IR Sensor zona scan\nGPIO35"]
     end
 
     subgraph SENSOR
-        LED_RGB[LED RGB]
-        PHOTO[Photodioda + ADC]
-        COLOR_MODULE[Color Sensor Module\nambient comp + normalisasi\n+ nearest neighbor]
+        LED_RGB["LED RGB\nR15 G2 B4"]
+        LDR["LDR / ADC\nGPIO33"]
+        COLOR_MODULE["Color Sensor Module\nambient comp + normalisasi\n+ nearest neighbor"]
     end
 
-    subgraph CONTROLLER["ESP32 — State Machine Utama"]
-        SM[State Machine\nIDLE/RUNNING/SCANNING\nSORTING/EMERGENCY]
-        QUEUE[Object Queue\nColorID + timing]
+    subgraph CONTROLLER["ESP32 - State Machine Utama"]
+        SM["State Machine\nIDLE/RUNNING/SCANNING\nSORTING/EMERGENCY"]
+        QUEUE["Object Queue\nColorID + timing"]
     end
 
     subgraph ACTUATOR
-        RELAY[Relay Safety]
-        MOTOR[Motor Konveyor\n+ L298N Driver]
-        SERVO1[Servo 1]
-        SERVO2[Servo 2]
+        RELAY["Relay Safety\nGPIO13"]
+        MOTOR["Motor Konveyor + L298N\nENB14 IN3-27 IN4-26"]
+        SERVO["Servo Sorter\nGPIO16"]
     end
 
     subgraph UI
-        LCD[LCD I2C 16x2]
-        LED_IND[LED Indikator\nHijau/Kuning/Merah]
-        BUZZER[Buzzer]
+        LCD["LCD I2C 16x2\nSDA21 SCL22"]
     end
 
     subgraph IOT
-        MQTT[MQTT Broker\nMosquitto]
-        NODERED[Node-RED Dashboard]
+        MQTT["MQTT Broker\nMosquitto"]
+        NODERED["Node-RED Dashboard"]
     end
 
-    BTN_START -->|digitalRead| SM
-    BTN_ESTOP -->|interrupt| SM
-    MQ2 -->|ADC| SM
-    IR -->|interrupt| SM
+    STARTSTOP -->|"power on/off"| SM
+    ESTOP -->|"hardware cut"| RELAY
+    DHT -->|"temperature threshold"| SM
+    IR -->|"object trigger"| SM
 
-    LED_RGB -->|GPIO ON/OFF| COLOR_MODULE
-    PHOTO -->|ADC value| COLOR_MODULE
-    COLOR_MODULE -->|ColorID enum| SM
+    LED_RGB -->|"GPIO ON/OFF"| COLOR_MODULE
+    LDR -->|"ADC value"| COLOR_MODULE
+    COLOR_MODULE -->|"ColorID enum"| SM
 
-    SM -->|ServoCommand| SERVO1
-    SM -->|ServoCommand| SERVO2
-    SM -->|PWM speed| MOTOR
-    SM -->|relay ON/OFF| RELAY
+    SM -->|"sort command"| SERVO
+    SM -->|"PWM speed"| MOTOR
+    SM -->|"relay ON/OFF"| RELAY
 
-    RELAY -->|cuts power| MOTOR
-    RELAY -->|cuts power| SERVO1
-    RELAY -->|cuts power| SERVO2
+    RELAY -->|"cuts power"| MOTOR
+    RELAY -->|"cuts power"| SERVO
 
-    SM -->|SystemState| LCD
-    SM -->|SystemState| LED_IND
-    SM -->|alert trigger| BUZZER
-
-    SM -->|publish| MQTT
-    MQTT -->|subscribe reset| SM
+    SM -->|"SystemState"| LCD
+    SM -->|"publish"| MQTT
+    MQTT -->|"subscribe reset"| SM
     MQTT --> NODERED
 ```
 
@@ -86,16 +79,16 @@ sequenceDiagram
     participant IOT as IoT/MQTT
     participant LCD as Display
 
-    IR->>SM: objek terdeteksi (interrupt)
-    SM->>SM: transisi RUNNING → SCANNING
+    IR->>SM: objek terdeteksi
+    SM->>SM: transisi RUNNING ke SCANNING
     SM->>LCD: update state SCANNING
     SM->>CS: scan()
-    CS->>CS: baca ambient
-    CS->>CS: baca R, G, B ADC
+    CS->>CS: baca ambient dari LDR
+    CS->>CS: nyalakan LED R, G, B bergantian
     CS->>CS: normalisasi + nearest neighbor
     CS-->>SM: ColorReading {r,g,b, ColorID}
     SM->>SM: simpan ke queue, hitung timing
-    SM->>SM: transisi SCANNING → SORTING
+    SM->>SM: transisi SCANNING ke SORTING
     SM->>SS: sortTo(ColorID)
     SS->>SS: gerak ke posisi, tahan, netral
     SS-->>SM: done
@@ -103,17 +96,16 @@ sequenceDiagram
     SM->>IOT: publishColor(reading)
     SM->>IOT: publishCount(counter)
     SM->>LCD: update warna + counter
-    SM->>SM: transisi SORTING → RUNNING
+    SM->>SM: transisi SORTING ke RUNNING
 ```
 
 ---
 
 ## Interface Contract Per Modul
 
-### Color Sensor → State Machine
+### Color Sensor ke State Machine
 
 ```c
-// Output dari color_sensor.h
 typedef enum {
     COLOR_UNKNOWN    = 0,
     COLOR_RED        = 1,
@@ -125,57 +117,47 @@ typedef enum {
 } ColorID;
 
 typedef struct {
-    uint16_t adc_r;       // raw ADC setelah kompensasi ambient
+    uint16_t adc_r;
     uint16_t adc_g;
     uint16_t adc_b;
-    float    r_norm;      // r / (r+g+b)
+    float    r_norm;
     float    g_norm;
     float    b_norm;
-    float    nn_distance; // jarak ke database terdekat
+    float    nn_distance;
     ColorID  color;
     const char* colorName;
 } ColorReading;
 
-// Fungsi yang dipanggil state machine:
 ColorReading colorSensor_scan(void);
 bool         colorSensor_objectPresent(void);
 ```
 
-### State Machine → Servo Sorter
+### State Machine ke Servo Sorter
 
 ```c
-// Input ke servo_sorter.h
 void servoSorter_sortTo(ColorID color);
-// Internally maps:
-//   COLOR_RED   → servo1: 30°,  servo2: 90°
-//   COLOR_GREEN → servo1: 150°, servo2: 90°
-//   COLOR_BLUE  → servo1: 90°,  servo2: 30°
-//   default     → servo1: 90°,  servo2: 90° (netral)
 void servoSorter_setNeutral(void);
 ```
 
-### State Machine → IoT
+### State Machine ke IoT
 
 ```c
-// Data yang dipublish ke MQTT:
 void iot_publishState(SystemState state);
 void iot_publishColor(ColorReading* reading);
-void iot_publishGas(uint16_t adc);
+void iot_publishTemperature(float temperatureC);
 void iot_publishCount(uint32_t r, uint32_t g, uint32_t b, uint32_t total);
-void iot_publishEmergency(const char* trigger, uint16_t value);
+void iot_publishEmergency(const char* trigger, float value);
 ```
 
-### Emergency → State Machine (feedback)
+### Emergency ke State Machine
 
 ```c
-// Emergency module mendeteksi dan SET FLAG — state machine baca flag ini
 typedef struct {
-    bool gasTriggered;
-    bool buttonTriggered;
-    bool relayFeedbackLost;
-    uint16_t gasADC;
+    bool temperatureTriggered;
+    bool sensorError;
+    float temperatureC;
 } EmergencyStatus;
 
 EmergencyStatus emergency_getStatus(void);
-void            emergency_clearFlags(void);   // hanya dipanggil saat reset
+void            emergency_clearFlags(void);
 ```
