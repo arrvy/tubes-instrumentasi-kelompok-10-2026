@@ -20,7 +20,8 @@ _lastUploadTime(0),
 _lastColor("UNKNOWN"),
 _systemState("IDLE"),
 _objectCount(0),
-_emergency(false)
+    _emergency(false),
+    _temperatureC(NAN)
 {
 }
 
@@ -112,6 +113,11 @@ void IoTBlynk::sendTelemetry()
         V3,
         _emergency
     );
+
+    Blynk.virtualWrite(
+        V4,
+        _temperatureC
+    );
 }
 
 void IoTBlynk::setLastColor(
@@ -142,6 +148,13 @@ void IoTBlynk::setSystemState(
     _systemState = state;
 }
 
+void IoTBlynk::setTemperature(
+    float temperatureC
+)
+{
+    _temperatureC = temperatureC;
+}
+
 IoTState IoTBlynk::getState() const
 {
     return _state;
@@ -167,6 +180,9 @@ IoTBlynk::getDebugData() const
 
     data.emergency =
         _emergency;
+
+    data.temperatureC =
+        _temperatureC;
 
     return data;
 }
@@ -201,6 +217,14 @@ void IoTBlynk::printDebug(
 
     stream.println(
         _emergency
+    );
+
+    stream.print(
+        F("Temp C : ")
+    );
+
+    stream.println(
+        _temperatureC
     );
 
     stream.println(

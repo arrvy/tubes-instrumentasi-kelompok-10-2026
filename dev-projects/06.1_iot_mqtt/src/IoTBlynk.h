@@ -60,6 +60,8 @@ public:
         uint32_t objectCount;
 
         bool emergency;
+
+        float temperatureC;
     };
 
 public:
@@ -129,6 +131,10 @@ public:
         const String& state
     );
 
+    void setTemperature(
+        float temperatureC
+    );
+
     /**
      * @brief Get connection state.
      *
@@ -181,4 +187,6 @@ private:
     uint32_t _objectCount;
 
     bool _emergency;
+
+    float _temperatureC;
 };

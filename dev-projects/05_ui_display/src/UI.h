@@ -109,6 +109,10 @@ public:
         const String& color
     );
 
+    void setTemperature(
+        float temperatureC
+    );
+
     void setObjectCount(
         uint32_t count
     );
@@ -154,6 +158,8 @@ private:
     ButtonEvent _buttonEvent;
 
     String _lastColor;
+
+    float _temperatureC;
 
     uint32_t _objectCount;
 

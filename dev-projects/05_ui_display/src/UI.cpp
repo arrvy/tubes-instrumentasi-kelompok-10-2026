@@ -17,6 +17,7 @@ UI::UI(const Config& config)
       _page(UIPage::MAIN),
       _buttonEvent(ButtonEvent::NONE),
       _lastColor("NONE"),
+    _temperatureC(NAN),
       _objectCount(0),
       _lastRefreshTime(0)
 {
@@ -96,6 +97,11 @@ void UI::setSystemState(SystemState state)
 void UI::setLastColor(const String& color)
 {
     _lastColor = color;
+}
+
+void UI::setTemperature(float temperatureC)
+{
+    _temperatureC = temperatureC;
 }
 
 void UI::setObjectCount(uint32_t count)
@@ -210,8 +216,10 @@ void UI::updateLCD()
             _lcd.print(F("Sensor"));
 
             _lcd.setCursor(0, 1);
-            _lcd.print(F("Color: "));
-            _lcd.print(_lastColor);
+            _lcd.print(F("T: "));
+            _lcd.print(_temperatureC, 1);
+            _lcd.print((char)223);
+            _lcd.print(F("C"));
             break;
         }
 
