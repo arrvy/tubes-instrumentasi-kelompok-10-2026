@@ -96,13 +96,17 @@ void ColorSensor::update()
             _raw.ambient =
                 analogRead(_config.pinPhotodiode);
 
-            _stateEnteredMillis = now;
+            _stateEnteredMillis = 0;
             _state = State::READ_RED;
             break;
 
         case State::READ_RED:
-
-            digitalWrite(_config.pinLedR, HIGH);
+            if (_stateEnteredMillis == 0)
+            {
+                digitalWrite(_config.pinLedR, HIGH);
+                _stateEnteredMillis = now;
+                return;
+            }
 
             if ((now - _stateEnteredMillis) < SETTLE_DELAY_MS)
             {
@@ -114,13 +118,17 @@ void ColorSensor::update()
 
             digitalWrite(_config.pinLedR, LOW);
 
-            _stateEnteredMillis = now;
+            _stateEnteredMillis = 0;
             _state = State::READ_GREEN;
             break;
 
         case State::READ_GREEN:
-
-            digitalWrite(_config.pinLedG, HIGH);
+            if (_stateEnteredMillis == 0)
+            {
+                digitalWrite(_config.pinLedG, HIGH);
+                _stateEnteredMillis = now;
+                return;
+            }
 
             if ((now - _stateEnteredMillis) < SETTLE_DELAY_MS)
             {
@@ -132,13 +140,17 @@ void ColorSensor::update()
 
             digitalWrite(_config.pinLedG, LOW);
 
-            _stateEnteredMillis = now;
+            _stateEnteredMillis = 0;
             _state = State::READ_BLUE;
             break;
 
         case State::READ_BLUE:
-
-            digitalWrite(_config.pinLedB, HIGH);
+            if (_stateEnteredMillis == 0)
+            {
+                digitalWrite(_config.pinLedB, HIGH);
+                _stateEnteredMillis = now;
+                return;
+            }
 
             if ((now - _stateEnteredMillis) < SETTLE_DELAY_MS)
             {
@@ -150,7 +162,7 @@ void ColorSensor::update()
 
             digitalWrite(_config.pinLedB, LOW);
 
-            _stateEnteredMillis = now;
+            _stateEnteredMillis = 0;
             _state = State::PROCESS;
             break;
 
