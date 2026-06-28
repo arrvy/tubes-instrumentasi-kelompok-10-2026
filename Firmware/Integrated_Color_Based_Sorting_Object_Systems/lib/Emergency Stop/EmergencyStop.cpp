@@ -45,6 +45,8 @@ bool EmergencyStop::begin()
 {
     _dht.begin();
 
+    _lastTemperatureReadTime = millis() - _config.readIntervalMs;
+
     if (_config.estopPin != 255)
     {
         pinMode(

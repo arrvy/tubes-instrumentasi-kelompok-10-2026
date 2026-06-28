@@ -203,7 +203,7 @@ private:
 
     uint32_t _previousMillis;
 
-    static constexpr uint8_t COLOR_COUNT = 5;
+    static constexpr uint8_t COLOR_COUNT = 30;
 
     /**
      * Database warna referensi.
