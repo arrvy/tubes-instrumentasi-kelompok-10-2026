@@ -22,8 +22,9 @@ namespace
   String lastColorText = "UNKNOWN";
   uint32_t lastObjectCount = 0;
   bool scanRequested = false;
+  bool emergencyActive = false;
 
-  String systemStateText = "IDLE";
+  String systemStateText = "RUNNING";
 
   ServoSorter::ColorClass mapColor(ColorSensor::ColorID color)
   {
@@ -91,27 +92,46 @@ void setup()
   conveyorMotor.start();
   systemStateText = "RUNNING";
   ui.setSystemState(systemStateText);
+  ui.setLastColor(lastColorText);
+  ui.setObjectCount(lastObjectCount);
+  ui.setTemperature(emergencyStop.getTemperatureC());
+  ui.update();
   iot.setSystemState(systemStateText);
+  iot.setLastColor(lastColorText);
+  iot.setObjectCount(lastObjectCount);
+  iot.setTemperature(emergencyStop.getTemperatureC());
 }
 
 void loop()
 {
   emergencyStop.update();
 
-  if (emergencyStop.isEmergency())
+  const bool emergencyNow = emergencyStop.isEmergency();
+
+  if (emergencyNow)
   {
-    conveyorMotor.emergencyStop();
-    servoSorter.emergencyStop();
-    scanRequested = false;
+    if (!emergencyActive)
+    {
+      conveyorMotor.emergencyStop();
+      servoSorter.emergencyStop();
+      scanRequested = false;
+      iot.setEmergency(true);
+      emergencyActive = true;
+    }
+
     systemStateText = "EMERGENCY";
     ui.setSystemState(systemStateText);
-    iot.setEmergency(true);
   }
   else
   {
-    conveyorMotor.resetEmergency();
-    servoSorter.resetEmergency();
-    iot.setEmergency(false);
+    if (emergencyActive)
+    {
+      conveyorMotor.resetEmergency();
+      servoSorter.resetEmergency();
+      conveyorMotor.start();
+      iot.setEmergency(false);
+      emergencyActive = false;
+    }
   }
 
   irTrigger.update();

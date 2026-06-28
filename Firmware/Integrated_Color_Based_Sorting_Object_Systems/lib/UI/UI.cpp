@@ -53,6 +53,11 @@ void UI::update()
     updateLCD();
 }
 
+void UI::setSystemState(SystemState state)
+{
+    _stateText = stateToString(state);
+}
+
 void UI::setSystemState(const String& stateText)
 {
     _stateText = stateText;
