@@ -14,63 +14,16 @@
 
 #include "UIConfig.h"
 
-/**
- * @brief Main system state.
- */
-enum class SystemState
-{
-    IDLE = 0,
-    RUNNING,
-    STOPPED,
-    EMERGENCY
-};
-
-/**
- * @brief LCD page selection.
- */
-enum class UIPage
-{
-    MAIN = 0,
-    SENSOR,
-    STATISTIC,
-    DEBUG
-};
-
-/**
- * @brief Button event.
- */
-enum class ButtonEvent
-{
-    NONE = 0,
-    START,
-    STOP,
-    NEXT_PAGE
-};
-
 class UI
 {
 public:
     struct Config
     {
-        uint8_t startButtonPin;
-
-        uint8_t stopButtonPin;
-
-        uint8_t nextButtonPin;
-
-        uint8_t greenLedPin;
-
-        uint8_t blueLedPin;
-
-        uint8_t redLedPin;
-
         uint8_t lcdAddress;
 
         uint8_t lcdColumns;
 
         uint8_t lcdRows;
-
-        uint32_t debounceMs;
 
         uint32_t refreshMs;
     };
@@ -82,9 +35,11 @@ public:
 
     struct DebugData
     {
-        SystemState state;
+        String stateText;
 
-        UIPage page;
+        String lastColor;
+
+        float temperatureC;
 
         uint32_t objectCount;
     };
@@ -99,10 +54,8 @@ public:
 
     void update();
 
-    ButtonEvent getButtonEvent();
-
     void setSystemState(
-        SystemState state
+        const String& stateText
     );
 
     void setLastColor(
@@ -117,12 +70,6 @@ public:
         uint32_t count
     );
 
-    void setPage(
-        UIPage page
-    );
-
-    UIPage getPage() const;
-
     DebugData getDebugData() const;
 
     void printDebug(
@@ -131,19 +78,7 @@ public:
 
 private:
 
-    void updateButtons();
-
     void updateLCD();
-
-    void updateLEDs();
-
-    const char* pageToString(
-        UIPage page
-    ) const;
-
-    const char* stateToString(
-        SystemState state
-    ) const;
 
 private:
 
@@ -151,11 +86,7 @@ private:
 
     LiquidCrystal_I2C _lcd;
 
-    SystemState _state;
-
-    UIPage _page;
-
-    ButtonEvent _buttonEvent;
+    String _stateText;
 
     String _lastColor;
 

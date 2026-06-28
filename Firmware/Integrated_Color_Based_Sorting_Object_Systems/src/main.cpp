@@ -23,6 +23,8 @@ namespace
   uint32_t lastObjectCount = 0;
   bool scanRequested = false;
 
+  String systemStateText = "IDLE";
+
   ServoSorter::ColorClass mapColor(ColorSensor::ColorID color)
   {
     switch (color)
@@ -42,14 +44,29 @@ namespace
     }
   }
 
-  SystemState mapSystemState()
+  String mapSystemStateText()
   {
     if (emergencyStop.isEmergency())
     {
-      return SystemState::EMERGENCY;
+      return "EMERGENCY";
     }
 
-    return conveyorMotor.isRunning() ? SystemState::RUNNING : SystemState::IDLE;
+    if (servoSorter.isBusy())
+    {
+      return "SORTING";
+    }
+
+    if (scanRequested)
+    {
+      return "READING";
+    }
+
+    if (conveyorMotor.isRunning())
+    {
+      return "RUNNING";
+    }
+
+    return "STOPPED";
   }
 }
 
@@ -72,7 +89,9 @@ void setup()
   iot.begin();
 
   conveyorMotor.start();
-  ui.setSystemState(SystemState::RUNNING);
+  systemStateText = "RUNNING";
+  ui.setSystemState(systemStateText);
+  iot.setSystemState(systemStateText);
 }
 
 void loop()
@@ -84,7 +103,8 @@ void loop()
     conveyorMotor.emergencyStop();
     servoSorter.emergencyStop();
     scanRequested = false;
-    ui.setSystemState(SystemState::EMERGENCY);
+    systemStateText = "EMERGENCY";
+    ui.setSystemState(systemStateText);
     iot.setEmergency(true);
   }
   else
@@ -122,12 +142,13 @@ void loop()
 
       ui.setLastColor(lastColorText);
       ui.setObjectCount(lastObjectCount);
-      ui.setSystemState(SystemState::RUNNING);
+      systemStateText = "SORTING";
+      ui.setSystemState(systemStateText);
       ui.setTemperature(emergencyStop.getTemperatureC());
 
       iot.setLastColor(lastColorText);
       iot.setObjectCount(lastObjectCount);
-      iot.setSystemState(String("RUNNING"));
+      iot.setSystemState(systemStateText);
       iot.setTemperature(emergencyStop.getTemperatureC());
 
       conveyorMotor.start();
@@ -137,8 +158,9 @@ void loop()
 
   ui.setTemperature(emergencyStop.getTemperatureC());
   iot.setTemperature(emergencyStop.getTemperatureC());
-  ui.setSystemState(mapSystemState());
-  iot.setSystemState(mapSystemState() == SystemState::EMERGENCY ? String("EMERGENCY") : String("RUNNING"));
+  systemStateText = mapSystemStateText();
+  ui.setSystemState(systemStateText);
+  iot.setSystemState(systemStateText);
 
   if ((millis() - lastDebugMs) >= 1000U)
   {
@@ -146,7 +168,7 @@ void loop()
 
     Serial.println(F("===== Integrated System ====="));
     Serial.print(F("System State : "));
-    Serial.println(mapSystemState() == SystemState::EMERGENCY ? F("EMERGENCY") : F("RUNNING"));
+    Serial.println(systemStateText);
     Serial.print(F("Last Color   : "));
     Serial.println(lastColorText);
     Serial.print(F("Object Count : "));
