@@ -20,8 +20,11 @@ public:
     {
         IDLE,
         READ_AMBIENT,
+        PREP_RED,
         READ_RED,
+        PREP_GREEN,
         READ_GREEN,
+        PREP_BLUE,
         READ_BLUE,
         PROCESS,
         DONE

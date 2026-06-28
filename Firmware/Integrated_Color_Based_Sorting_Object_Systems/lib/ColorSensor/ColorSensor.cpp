@@ -24,7 +24,7 @@ ColorSensor::Config ColorSensor::defaultConfig()
     config.pinLedG = 2;
     config.pinLedB = 4;
     config.pinPhotodiode = 33;
-    config.sampleDelayMs = 120;
+    config.sampleDelayMs = 250;
 
     return config;
 }
@@ -79,36 +79,51 @@ void ColorSensor::update()
             _raw.ambient =
                 analogRead(_config.pinPhotodiode);
 
+            _state = State::PREP_RED;
+            break;
+
+        case State::PREP_RED:
+
+            digitalWrite(_config.pinLedR, HIGH);
+
             _state = State::READ_RED;
             break;
 
         case State::READ_RED:
-
-            digitalWrite(_config.pinLedR, HIGH);
 
             _raw.red =
                 analogRead(_config.pinPhotodiode);
 
             digitalWrite(_config.pinLedR, LOW);
 
+            _state = State::PREP_GREEN;
+            break;
+
+        case State::PREP_GREEN:
+
+            digitalWrite(_config.pinLedG, HIGH);
+
             _state = State::READ_GREEN;
             break;
 
         case State::READ_GREEN:
-
-            digitalWrite(_config.pinLedG, HIGH);
 
             _raw.green =
                 analogRead(_config.pinPhotodiode);
 
             digitalWrite(_config.pinLedG, LOW);
 
+            _state = State::PREP_BLUE;
+            break;
+
+        case State::PREP_BLUE:
+
+            digitalWrite(_config.pinLedB, HIGH);
+
             _state = State::READ_BLUE;
             break;
 
         case State::READ_BLUE:
-
-            digitalWrite(_config.pinLedB, HIGH);
 
             _raw.blue =
                 analogRead(_config.pinPhotodiode);
