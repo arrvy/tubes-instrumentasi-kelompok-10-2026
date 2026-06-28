@@ -33,7 +33,8 @@ ColorSensor::ColorSensor(const Config& config)
     : _config(config),
       _state(State::IDLE),
       _detectedColor(ColorID::UNKNOWN),
-      _previousMillis(0)
+    _previousMillis(0),
+    _stateEnteredMillis(0)
 {
 }
 
@@ -74,6 +75,7 @@ void ColorSensor::update()
 
             setAllLedOff();
 
+            _stateEnteredMillis = now;
             _state = State::READ_AMBIENT;
             break;
 
@@ -86,9 +88,15 @@ void ColorSensor::update()
              * kompensasi agar hasil pembacaan tidak terlalu terpengaruh
              * oleh perubahan kondisi pencahayaan ruangan.
              */
+            if ((now - _stateEnteredMillis) < SETTLE_DELAY_MS)
+            {
+                return;
+            }
+
             _raw.ambient =
                 analogRead(_config.pinPhotodiode);
 
+            _stateEnteredMillis = now;
             _state = State::READ_RED;
             break;
 
@@ -96,11 +104,17 @@ void ColorSensor::update()
 
             digitalWrite(_config.pinLedR, HIGH);
 
+            if ((now - _stateEnteredMillis) < SETTLE_DELAY_MS)
+            {
+                return;
+            }
+
             _raw.red =
                 analogRead(_config.pinPhotodiode);
 
             digitalWrite(_config.pinLedR, LOW);
 
+            _stateEnteredMillis = now;
             _state = State::READ_GREEN;
             break;
 
@@ -108,11 +122,17 @@ void ColorSensor::update()
 
             digitalWrite(_config.pinLedG, HIGH);
 
+            if ((now - _stateEnteredMillis) < SETTLE_DELAY_MS)
+            {
+                return;
+            }
+
             _raw.green =
                 analogRead(_config.pinPhotodiode);
 
             digitalWrite(_config.pinLedG, LOW);
 
+            _stateEnteredMillis = now;
             _state = State::READ_BLUE;
             break;
 
@@ -120,11 +140,17 @@ void ColorSensor::update()
 
             digitalWrite(_config.pinLedB, HIGH);
 
+            if ((now - _stateEnteredMillis) < SETTLE_DELAY_MS)
+            {
+                return;
+            }
+
             _raw.blue =
                 analogRead(_config.pinPhotodiode);
 
             digitalWrite(_config.pinLedB, LOW);
 
+            _stateEnteredMillis = now;
             _state = State::PROCESS;
             break;
 

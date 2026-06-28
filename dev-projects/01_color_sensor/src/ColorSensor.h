@@ -199,8 +199,10 @@ private:
     ColorID _detectedColor;
 
     uint32_t _previousMillis;
+    uint32_t _stateEnteredMillis;
 
     static constexpr uint8_t COLOR_COUNT = 5;
+    static constexpr uint32_t SETTLE_DELAY_MS = 1000;
 
     /**
      * Database warna referensi.
