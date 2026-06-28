@@ -16,6 +16,6 @@ namespace IoTBlynkConfig
     constexpr uint32_t DEFAULT_UPLOAD_INTERVAL_MS = 1000;
 
     // Blynk Template Configuration - Update with your actual values
-    #define BLYNK_TEMPLATE_ID       "TMPL_XXXXXXXXXXXX"
-    #define BLYNK_TEMPLATE_NAME     "Device"
+    #define BLYNK_TEMPLATE_ID       "TMPL6yBckqnHi"
+    #define BLYNK_TEMPLATE_NAME     "KIAJLK"
 }

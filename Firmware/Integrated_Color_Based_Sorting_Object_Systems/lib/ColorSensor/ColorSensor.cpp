@@ -9,20 +9,45 @@
 const ColorSensor::ColorReference
 ColorSensor::_database[COLOR_COUNT] =
 {
-    { ColorID::RED,   0.30f, 0.60f, 0.72f },
-    { ColorID::GREEN, 0.65f, 0.25f, 0.60f },
-    { ColorID::BLUE,  0.70f, 0.65f, 0.25f },
-    { ColorID::WHITE, 0.33f, 0.33f, 0.33f },
-    { ColorID::BLACK, 0.00f, 0.00f, 0.00f }
+    { ColorID::RED,   0.4765657987f, 0.2736101337f, 0.2498240676f },
+    { ColorID::RED,   0.4765801354f, 0.2731376975f, 0.2502821670f },
+    { ColorID::RED,   0.4763918252f, 0.2734319944f, 0.2501761804f },
+    { ColorID::RED,   0.4766949153f, 0.2733050847f, 0.2500000000f },
+    { ColorID::RED,   0.4766275950f, 0.2732664878f, 0.2501059172f },
+    { ColorID::RED,   0.4774366954f, 0.2733059839f, 0.2492573207f },
+    { ColorID::RED,   0.4770318021f, 0.2734982332f, 0.2494699647f },
+    { ColorID::RED,   0.4774075120f, 0.2732279017f, 0.2493645863f },
+    { ColorID::RED,   0.4776710006f, 0.2734595817f, 0.2488694178f },
+    { ColorID::RED,   0.4775781582f, 0.2733059839f, 0.2491158580f },
+    { ColorID::GREEN, 0.3856379513f, 0.3693470611f, 0.2450149876f },
+    { ColorID::GREEN, 0.3856975381f, 0.3685033216f, 0.2457991403f },
+    { ColorID::GREEN, 0.3852266806f, 0.3688118812f, 0.2459614382f },
+    { ColorID::GREEN, 0.3859007833f, 0.3689295039f, 0.2451697128f },
+    { ColorID::GREEN, 0.3857589984f, 0.3682837767f, 0.2459572248f },
+    { ColorID::GREEN, 0.3858596400f, 0.3692929820f, 0.2448473780f },
+    { ColorID::GREEN, 0.3858206032f, 0.3693693694f, 0.2448100274f },
+    { ColorID::GREEN, 0.3856285863f, 0.3691966615f, 0.2451747522f },
+    { ColorID::GREEN, 0.3859397418f, 0.3683318117f, 0.2457284466f },
+    { ColorID::GREEN, 0.3853976532f, 0.3688396349f, 0.2457627119f },
+    { ColorID::BLUE,  0.3034776903f, 0.3262795276f, 0.3702427822f },
+    { ColorID::BLUE,  0.3031198686f, 0.3257799672f, 0.3711001642f },
+    { ColorID::BLUE,  0.3027311616f, 0.3262586377f, 0.3710102007f },
+    { ColorID::BLUE,  0.3037766831f, 0.3261083744f, 0.3701149425f },
+    { ColorID::BLUE,  0.3030900723f, 0.3262656147f, 0.3706443130f },
+    { ColorID::BLUE,  0.3026662278f, 0.3260368664f, 0.3712969059f },
+    { ColorID::BLUE,  0.3029804051f, 0.3268565783f, 0.3701630166f },
+    { ColorID::BLUE,  0.3031450683f, 0.3265272518f, 0.3703276799f },
+    { ColorID::BLUE,  0.3020266930f, 0.3265776899f, 0.3713956171f },
+    { ColorID::BLUE,  0.3020266930f, 0.3265776899f, 0.3713956171f }
 };
 
 ColorSensor::Config ColorSensor::defaultConfig()
 {
     Config config;
 
-    config.pinLedR = 15;
+    config.pinLedR = 4;
     config.pinLedG = 2;
-    config.pinLedB = 4;
+    config.pinLedB = 15;
     config.pinPhotodiode = 33;
     config.sampleDelayMs = 250;
 
@@ -180,12 +205,31 @@ void ColorSensor::processClassification()
     _normalized.g = g / total;
     _normalized.b = b / total;
 
+    const float strongestOther =
+        (_normalized.g > _normalized.b) ?
+        _normalized.g :
+        _normalized.b;
+
+    const float redDominance =
+        _normalized.r - strongestOther;
+
+    if (redDominance >= 0.08f)
+    {
+        _detectedColor = ColorID::RED;
+        return;
+    }
+
     float bestDistance = 9999.0f;
 
     ColorID bestColor = ColorID::UNKNOWN;
 
     for (uint8_t i = 0; i < COLOR_COUNT; i++)
     {
+        if (_database[i].id == ColorID::RED)
+        {
+            continue;
+        }
+
         float distance =
             calculateDistance(
                 _normalized,

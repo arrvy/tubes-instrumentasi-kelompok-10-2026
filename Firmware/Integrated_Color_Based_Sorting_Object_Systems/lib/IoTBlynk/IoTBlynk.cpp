@@ -29,9 +29,9 @@ IoTBlynk::Config IoTBlynk::defaultConfig()
 {
     Config config;
 
-    config.authToken = "TOKEN";
-    config.ssid = "WIFI_NAME";
-    config.password = "WIFI_PASS";
+    config.authToken = "BbRE6EQKLDNvsfsqeyW8lDoGAtxS0iw3";
+    config.ssid = "KonSer.net";
+    config.password = "servocaporangtua45";
     config.uploadIntervalMs = IoTBlynkConfig::DEFAULT_UPLOAD_INTERVAL_MS;
 
     return config;

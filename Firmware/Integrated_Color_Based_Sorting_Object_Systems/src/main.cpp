@@ -126,6 +126,7 @@ void loop()
   {
     if (emergencyActive)
     {
+      emergencyStop.resetEmergency();
       conveyorMotor.resetEmergency();
       servoSorter.resetEmergency();
       conveyorMotor.start();
@@ -154,15 +155,14 @@ void loop()
     {
       const ColorSensor::ColorID detectedColor = colorSensor.getColor();
       const ServoSorter::ColorClass targetColor = mapColor(detectedColor);
+      const bool sortAccepted = servoSorter.triggerSort(targetColor);
 
       lastColorText = colorSensor.colorToString(detectedColor);
       lastObjectCount = irTrigger.getTotalCount();
 
-      servoSorter.triggerSort(targetColor);
-
       ui.setLastColor(lastColorText);
       ui.setObjectCount(lastObjectCount);
-      systemStateText = "SORTING";
+      systemStateText = sortAccepted ? "SORTING" : "SORT_REJECTED";
       ui.setSystemState(systemStateText);
       ui.setTemperature(emergencyStop.getTemperatureC());
 
