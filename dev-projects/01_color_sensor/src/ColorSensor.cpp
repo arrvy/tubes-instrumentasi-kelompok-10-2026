@@ -41,10 +41,20 @@ ColorSensor::ColorSensor(const Config& config)
 void ColorSensor::begin()
 {
     pinMode(_config.pinLedR, OUTPUT);
+    Serial.println("pinLedR: " + String(_config.pinLedR));
     pinMode(_config.pinLedG, OUTPUT);
+    Serial.println("pinLedG: " + String(_config.pinLedG));
     pinMode(_config.pinLedB, OUTPUT);
+    Serial.println("pinLedB: " + String(_config.pinLedB));
 
+    digitalWrite(_config.pinLedR, HIGH);
+    digitalWrite(_config.pinLedG, HIGH);
+    digitalWrite(_config.pinLedB, HIGH);
+
+    delay(1000);
+    
     setAllLedOff();
+    Serial.println("All LED OFF");
 }
 
 void ColorSensor::update()
