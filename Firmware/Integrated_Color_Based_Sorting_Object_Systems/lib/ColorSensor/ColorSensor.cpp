@@ -24,7 +24,7 @@ ColorSensor::Config ColorSensor::defaultConfig()
     config.pinLedG = 2;
     config.pinLedB = 4;
     config.pinPhotodiode = 33;
-    config.sampleDelayMs = 50;
+    config.sampleDelayMs = 120;
 
     return config;
 }
