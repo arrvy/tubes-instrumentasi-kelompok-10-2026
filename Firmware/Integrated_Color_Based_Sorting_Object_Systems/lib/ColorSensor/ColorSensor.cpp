@@ -49,7 +49,7 @@ ColorSensor::Config ColorSensor::defaultConfig()
     config.pinLedG = 2;
     config.pinLedB = 15;
     config.pinPhotodiode = 33;
-    config.sampleDelayMs = 250;
+    config.sampleDelayMs = 50;
 
     return config;
 }
@@ -58,7 +58,8 @@ ColorSensor::ColorSensor(const Config& config)
     : _config(config),
       _state(State::IDLE),
       _detectedColor(ColorID::UNKNOWN),
-      _previousMillis(0)
+    _previousMillis(0),
+    _stateEnteredMillis(0)
 {
 }
 
@@ -66,10 +67,20 @@ ColorSensor::ColorSensor(const Config& config)
 void ColorSensor::begin()
 {
     pinMode(_config.pinLedR, OUTPUT);
+    Serial.println("pinLedR: " + String(_config.pinLedR));
     pinMode(_config.pinLedG, OUTPUT);
+    Serial.println("pinLedG: " + String(_config.pinLedG));
     pinMode(_config.pinLedB, OUTPUT);
+    Serial.println("pinLedB: " + String(_config.pinLedB));
 
+    digitalWrite(_config.pinLedR, HIGH);
+    digitalWrite(_config.pinLedG, HIGH);
+    digitalWrite(_config.pinLedB, HIGH);
+
+    delay(1000);
+    
     setAllLedOff();
+    Serial.println("All LED OFF");
 }
 
 void ColorSensor::update()
@@ -89,6 +100,7 @@ void ColorSensor::update()
 
             setAllLedOff();
 
+            _stateEnteredMillis = now;
             _state = State::READ_AMBIENT;
             break;
 
@@ -101,60 +113,81 @@ void ColorSensor::update()
              * kompensasi agar hasil pembacaan tidak terlalu terpengaruh
              * oleh perubahan kondisi pencahayaan ruangan.
              */
+            if ((now - _stateEnteredMillis) < SETTLE_DELAY_MS)
+            {
+                return;
+            }
+
             _raw.ambient =
                 analogRead(_config.pinPhotodiode);
 
-            _state = State::PREP_RED;
-            break;
-
-        case State::PREP_RED:
-
-            digitalWrite(_config.pinLedR, HIGH);
-
+            _stateEnteredMillis = 0;
             _state = State::READ_RED;
             break;
 
         case State::READ_RED:
+            if (_stateEnteredMillis == 0)
+            {
+                digitalWrite(_config.pinLedR, HIGH);
+                _stateEnteredMillis = now;
+                return;
+            }
+
+            if ((now - _stateEnteredMillis) < SETTLE_DELAY_MS)
+            {
+                return;
+            }
 
             _raw.red =
                 analogRead(_config.pinPhotodiode);
 
             digitalWrite(_config.pinLedR, LOW);
 
-            _state = State::PREP_GREEN;
-            break;
-
-        case State::PREP_GREEN:
-
-            digitalWrite(_config.pinLedG, HIGH);
-
+            _stateEnteredMillis = 0;
             _state = State::READ_GREEN;
             break;
 
         case State::READ_GREEN:
+            if (_stateEnteredMillis == 0)
+            {
+                digitalWrite(_config.pinLedG, HIGH);
+                _stateEnteredMillis = now;
+                return;
+            }
+
+            if ((now - _stateEnteredMillis) < SETTLE_DELAY_MS)
+            {
+                return;
+            }
 
             _raw.green =
                 analogRead(_config.pinPhotodiode);
 
             digitalWrite(_config.pinLedG, LOW);
 
-            _state = State::PREP_BLUE;
-            break;
-
-        case State::PREP_BLUE:
-
-            digitalWrite(_config.pinLedB, HIGH);
-
+            _stateEnteredMillis = 0;
             _state = State::READ_BLUE;
             break;
 
         case State::READ_BLUE:
+            if (_stateEnteredMillis == 0)
+            {
+                digitalWrite(_config.pinLedB, HIGH);
+                _stateEnteredMillis = now;
+                return;
+            }
+
+            if ((now - _stateEnteredMillis) < SETTLE_DELAY_MS)
+            {
+                return;
+            }
 
             _raw.blue =
                 analogRead(_config.pinPhotodiode);
 
             digitalWrite(_config.pinLedB, LOW);
 
+            _stateEnteredMillis = 0;
             _state = State::PROCESS;
             break;
 
@@ -205,31 +238,12 @@ void ColorSensor::processClassification()
     _normalized.g = g / total;
     _normalized.b = b / total;
 
-    const float strongestOther =
-        (_normalized.g > _normalized.b) ?
-        _normalized.g :
-        _normalized.b;
-
-    const float redDominance =
-        _normalized.r - strongestOther;
-
-    if (redDominance >= 0.08f)
-    {
-        _detectedColor = ColorID::RED;
-        return;
-    }
-
     float bestDistance = 9999.0f;
 
     ColorID bestColor = ColorID::UNKNOWN;
 
     for (uint8_t i = 0; i < COLOR_COUNT; i++)
     {
-        if (_database[i].id == ColorID::RED)
-        {
-            continue;
-        }
-
         float distance =
             calculateDistance(
                 _normalized,

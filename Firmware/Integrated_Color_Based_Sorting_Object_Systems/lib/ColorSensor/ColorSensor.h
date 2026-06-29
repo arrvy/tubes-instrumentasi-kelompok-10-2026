@@ -20,11 +20,8 @@ public:
     {
         IDLE,
         READ_AMBIENT,
-        PREP_RED,
         READ_RED,
-        PREP_GREEN,
         READ_GREEN,
-        PREP_BLUE,
         READ_BLUE,
         PROCESS,
         DONE
@@ -202,8 +199,10 @@ private:
     ColorID _detectedColor;
 
     uint32_t _previousMillis;
+    uint32_t _stateEnteredMillis;
 
     static constexpr uint8_t COLOR_COUNT = 30;
+    static constexpr uint32_t SETTLE_DELAY_MS = 1000;
 
     /**
      * Database warna referensi.
